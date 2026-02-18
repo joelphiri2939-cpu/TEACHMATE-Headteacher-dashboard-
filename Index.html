@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeachMate Headteacher Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gradient: linear-gradient(135deg, #4e50ff 0%, #d423f9 100%);
+      --glass: rgba(255, 255, 255, 0.2);
+      --light: #ffffff;
+      --dark: #1a1a1a;
+      --text-light: #333333;
+      --accent: #00cc88;
+      --secondary: #ff6f61;
+      --radius: 18px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--gradient);
+      padding: 1rem 2rem;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--light);
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .content-container {
+      flex: 1;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--accent);
+      margin-bottom: 2rem;
+    }
+
+    .card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      border-radius: 8px;
+      border: 1px solid var(--accent);
+    }
+
+    button {
+      background: var(--accent);
+      color: var(--light);
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--secondary);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th, td {
+      padding: 0.8rem;
+      border: 1px solid var(--accent);
+      text-align: left;
+    }
+
+    th {
+      background: var(--gradient);
+      color: var(--light);
+    }
+
+    .teacher-item, .student-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .teacher-item span, .student-item span {
+      font-size: 1.5rem;
+      margin-right: 1rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #888;
+      margin: 1rem 0;
+    }
+
+    #auth-section, #dashboard, #teacher-selection, #class-selection, #data-view { display: none; }
+
+    #loading-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #loading-modal .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TeachMate Headteacher Dashboard</h1>
+  </header>
+
+  <div class="app-container">
+    <div class="content-container">
+      <!-- Auth Section -->
+      <div id="auth-section" class="card">
+        <h2>Login / Register</h2>
+        <input type="text" id="name" placeholder="Name">
+        <input type="text" id="ts-number" placeholder="TS Number">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <select id="role">
+          <option value="headteacher">Headteacher</option>
+        </select>
+        <input type="text" id="school-name" placeholder="School Name">
+        <button id="login-btn">Login</button>
+        <button id="register-btn">Register</button>
+        <p id="auth-msg"></p>
+      </div>
+
+      <!-- Dashboard -->
+      <div id="dashboard" class="card">
+        <h2>Welcome, Headteacher</h2>
+        <button id="view-teachers-btn">View Teachers</button>
+        <button id="logout-btn">Logout</button>
+      </div>
+
+      <!-- Teacher Selection -->
+      <div id="teacher-selection" class="card">
+        <h2>Select Teacher</h2>
+        <div id="teachers-list"></div>
+      </div>
+
+      <!-- Class Selection -->
+      <div id="class-selection" class="card">
+        <h2>Select Class</h2>
+        <select id="classes-select">
+          <option value="">-- Select Class --</option>
+        </select>
+        <button id="view-class-data">View Data</button>
+      </div>
+
+      <!-- Data View -->
+      <div id="data-view" class="card">
+        <h2>Class Data</h2>
+        <button onclick="loadSectionData('students')">Students</button>
+        <button onclick="loadSectionData('attendance')">Attendance</button>
+        <button onclick="loadSectionData('results')">Results</button>
+        <button onclick="loadSectionData('fees')">Fees</button>
+        <div id="data-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Modal -->
+  <div id="loading-modal">
+    <div class="modal-content">
+      <p>Loading...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC3Uco6S1xyoxdgjbNtpAe_ofUtG0nI0XI",
+      authDomain: "grok-7568a.firebaseapp.com",
+      projectId: "grok-7568a",
+      storageBucket: "grok-7568a.appspot.com",
+      messagingSenderId: "802272835730",
+      appId: "1:802272835730:web:f80f3c986cebbfcd51ce4b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let schoolId = null;
+    let currentTeacherId = null;
+    let selectedClassId = null;
+
+    // Show/Hide Loading
+    function showLoading() {
+      document.getElementById('loading-modal').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loading-modal').style.display = 'none';
+    }
+
+    // Show Sections with History Push
+    function showSection(id, state = {}) {
+      ['auth-section', 'dashboard', 'teacher-selection', 'class-selection', 'data-view'].forEach(s => {
+        document.getElementById(s).style.display = s === id ? 'block' : 'none';
+      });
+      history.pushState({ page: id, ...state }, '', `#${id}`);
+    }
+
+    // Handle Back/Forward
+    window.onpopstate = function(event) {
+      if (event.state) {
+        const { page, teacherId, classId } = event.state;
+        if (page === 'teacher-selection') {
+          showSection('teacher-selection');
+        } else if (page === 'class-selection') {
+          currentTeacherId = teacherId;
+          loadClasses();
+          showSection('class-selection');
+        } else if (page === 'data-view') {
+          currentTeacherId = teacherId;
+          selectedClassId = classId;
+          showSection('data-view');
+        } else if (page === 'dashboard') {
+          showSection('dashboard');
+        } else {
+          showSection('auth-section');
+        }
+      } else {
+        showSection('auth-section');
+      }
+    };
+
+    // Register
+    document.getElementById('register-btn').addEventListener('click', async () => {
+      showLoading();
+      const name = document.getElementById('name').value.trim();
+      const tsNumber = document.getElementById('ts-number').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const schoolName = document.getElementById('school-name').value.trim();
+      const role = document.getElementById('role').value;
+
+      if (!name || !tsNumber || !email || !password || !schoolName) {
+        alert('Fill all fields');
+        hideLoading();
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        currentUser = userCredential.user;
+
+        // Find or create school with EXACT name match
+        const schoolsQuery = query(collection(db, 'schools'), where('name', '==', schoolName));
+        const schoolsSnap = await getDocs(schoolsQuery);
+        if (schoolsSnap.empty) {
+          const schoolRef = await addDoc(collection(db, 'schools'), { name: schoolName });
+          schoolId = schoolRef.id;
+        } else {
+          schoolId = schoolsSnap.docs[0].id;
+        }
+
+        // Save user doc with role and schoolId
+        await setDoc(doc(db, 'users', currentUser.uid), { schoolId, role });
+
+        // Save headteacher doc
+        await setDoc(doc(db, 'schools', schoolId, 'headteachers', currentUser.uid), {
+          name,
+          tsNumber,
+          email,
+          createdAt: new Date().toISOString()
+        });
+
+        showDashboard();
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Login
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      showLoading();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        alert('Fill all fields');
+        hideLoading();
+        return;
+      }
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        currentUser = userCredential.user;
+
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          schoolId = userData.schoolId;
+          if (userData.role === 'headteacher') {
+            const headDoc = await getDoc(doc(db, 'schools', schoolId, 'headteachers', currentUser.uid));
+            if (headDoc.exists()) {
+              showDashboard();
+            } else {
+              alert('Access denied: Not registered as headteacher in this school');
+              signOut(auth);
+            }
+          } else {
+            alert('Access denied: Not a headteacher');
+            signOut(auth);
+          }
+        } else {
+          alert('User not found');
+        }
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await signOut(auth);
+      currentUser = null;
+      schoolId = null;
+      currentTeacherId = null;
+      selectedClassId = null;
+      showSection('auth-section');
+    });
+
+    // Show Dashboard
+    function showDashboard() {
+      showSection('dashboard');
+    }
+
+    // View Teachers Button
+    document.getElementById('view-teachers-btn').addEventListener('click', async () => {
+      showSection('teacher-selection');
+      showLoading();
+      try {
+        const teachersRef = collection(db, 'schools', schoolId, 'teachers');
+        const teachersSnap = await getDocs(teachersRef);
+        const list = document.getElementById('teachers-list');
+        list.innerHTML = '';
+        if (teachersSnap.empty) {
+          list.innerHTML = '<p class="empty-state">No teachers registered under this school yet.</p>';
+        } else {
+          teachersSnap.forEach(doc => {
+            const d = doc.data();
+            const item = document.createElement('div');
+            item.classList.add('teacher-item');
+            item.innerHTML = `
+              <span>🧑‍🏫</span>
+              <div>
+                <p>Teacher: ${d.name}</p>
+                <p>TS No: ${d.tsNumber}</p>
+                <button class="view-teacher-data" data-teacher-id="${doc.id}">View Teacher Data</button>
+              </div>
+            `;
+            list.appendChild(item);
+          });
+          // Add event listeners to buttons
+          document.querySelectorAll('.view-teacher-data').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              currentTeacherId = e.target.dataset.teacherId;
+              await loadClasses();
+              showSection('class-selection', { teacherId: currentTeacherId });
+            });
+          });
+        }
+      } catch (error) {
+        alert(`Error loading teachers: ${error.message}`);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Load Classes for Selected Teacher
+    async function loadClasses() {
+      showLoading();
+      try {
+        const classesRef = collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'classes');
+        const classesSnap = await getDocs(classesRef);
+        const select = document.getElementById('classes-select');
+        select.innerHTML = '<option value="">-- Select Class --</option>';
+        classesSnap.forEach(doc => {
+          const option = document.createElement('option');
+          option.value = doc.id;
+          option.textContent = doc.data().displayName || doc.id;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        alert(`Error loading classes: ${error.message}`);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // View Class Data
+    document.getElementById('view-class-data').addEventListener('click', () => {
+      selectedClassId = document.getElementById('classes-select').value;
+      if (!selectedClassId) return alert('Select a class');
+      showSection('data-view', { teacherId: currentTeacherId, classId: selectedClassId });
+    });
+
+    // Zambian Grade Computation
+    function getZambianGrade(score) {
+      if (score >= 80) return '1 (Distinction)';
+      if (score >= 70) return '2 (Distinction)';
+      if (score >= 60) return '3 (Merit)';
+      if (score >= 50) return '4 (Merit)';
+      if (score >= 40) return '5 (Credit)';
+      if (score >= 30) return '6 (Credit)';
+      if (score >= 20) return '7 (Pass)';
+      if (score >= 10) return '8 (Pass)';
+      return '9 (Fail)';
+    }
+
+    // Load Section Data
+    window.loadSectionData = async function(section) {
+      showLoading();
+      const content = document.getElementById('data-content');
+      content.innerHTML = '';
+      try {
+        if (section === 'students') {
+          const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), where('classId', '==', selectedClassId));
+          const data = await getDocs(q);
+          if (data.empty) {
+            content.innerHTML = '<p class="empty-state">No students in this class yet.</p>';
+          } else {
+            const p = document.createElement('p');
+            p.textContent = `Total Students: ${data.size}`;
+            content.appendChild(p);
+            const table = createTable(['Avatar', 'ID', 'Name', 'Phone', 'Address']);
+            data.forEach(doc => {
+              const d = doc.data();
+              addRow(table, ['🧑‍🎓', doc.id, d.name, d.phone, d.address]);
+            });
+            content.appendChild(table);
+          }
+        } else if (section === 'attendance') {
+          const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'attendanceHistory'), where('classId', '==', selectedClassId), orderBy('date', 'desc'));
+          const data = await getDocs(q);
+          if (data.empty) {
+            content.innerHTML = '<p class="empty-state">No attendance recorded yet.</p>';
+          } else {
+            let totalEntries = 0;
+            let presentCount = 0;
+            let mostRecentDate = '';
+            const table = createTable(['Date', 'Student ID', 'Present', 'Term', 'Week', 'Synced At']);
+            data.forEach(doc => {
+              const d = doc.data();
+              addRow(table, [d.date, d.studentId, d.present ? 'Yes' : 'No', d.term, d.week, d.syncedAt || 'N/A']);
+              totalEntries++;
+              if (d.present) presentCount++;
+              if (!mostRecentDate || d.date > mostRecentDate) mostRecentDate = d.date;
+            });
+            content.appendChild(table);
+            const summary = document.createElement('div');
+            summary.innerHTML = `
+              <p>Attendance Percentage: ${((presentCount / totalEntries) * 100).toFixed(2)}%</p>
+              <p>Most Recent Marking Date: ${mostRecentDate}</p>
+            `;
+            content.appendChild(summary);
+          }
+        } else if (section === 'results') {
+          const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'), where('classId', '==', selectedClassId));
+          const data = await getDocs(q);
+          if (data.empty) {
+            content.innerHTML = '<p class="empty-state">No results recorded yet.</p>';
+          } else {
+            data.forEach(doc => {
+              const d = doc.data();
+              const header = document.createElement('h3');
+              header.textContent = `${d.subject} - ${d.testName} (${d.category}, ${d.level}) Date: ${d.date} Synced: ${d.syncedAt || 'N/A'}`;
+              content.appendChild(header);
+              const table = createTable(['Student ID', 'Score', 'Grade']);
+              let totalScore = 0;
+              let count = 0;
+              const gradeDist = new Map();
+              if (d.scores) {
+                Object.entries(d.scores).forEach(([studentId, score]) => {
+                  const grade = getZambianGrade(score);
+                  addRow(table, [studentId, score, grade]);
+                  totalScore += score;
+                  count++;
+                  gradeDist.set(grade, (gradeDist.get(grade) || 0) + 1);
+                });
+              }
+              content.appendChild(table);
+              const summary = document.createElement('div');
+              summary.innerHTML = `<p>Class Average: ${(totalScore / count).toFixed(2)}</p><h4>Grade Distribution:</h4>`;
+              const distTable = createTable(['Grade', 'Count']);
+              gradeDist.forEach((cnt, grd) => addRow(distTable, [grd, cnt]));
+              summary.appendChild(distTable);
+              content.appendChild(summary);
+            });
+          }
+        } else if (section === 'fees') {
+          // Load feesConfig
+          const configRef = doc(db, 'schools', schoolId, 'teachers', currentTeacherId, 'feesConfig', selectedClassId);
+          const configSnap = await getDoc(configRef);
+          const totalFee = configSnap.exists() ? configSnap.data().totalFee || 0 : 0;
+
+          // Load students
+          const studentsQ = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), where('classId', '==', selectedClassId));
+          const studentsData = await getDocs(studentsQ);
+          if (studentsData.empty) {
+            content.innerHTML = '<p class="empty-state">No fees data available (no students).</p>';
+            return;
+          }
+          const numStudents = studentsData.size;
+          const expectedTotal = totalFee * numStudents;
+          const studentsMap = new Map();
+          studentsData.forEach(doc => {
+            studentsMap.set(doc.id, {name: doc.data().name});
+          });
+
+          // Load feesHistory
+          const feesQ = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'feesHistory'), where('classId', '==', selectedClassId));
+          const feesData = await getDocs(feesQ);
+          if (feesData.empty) {
+            content.innerHTML = '<p class="empty-state">No fees recorded yet.</p>';
+          }
+          const studentPayments = new Map();
+          let totalCollected = 0;
+          feesData.forEach(doc => {
+            const d = doc.data();
+            if (!studentPayments.has(d.studentId)) studentPayments.set(d.studentId, []);
+            studentPayments.get(d.studentId).push({date: d.date, amount: d.amount, syncedAt: d.syncedAt || 'N/A'});
+            totalCollected += d.amount;
+          });
+
+          // Per student
+          studentsMap.forEach((student, studentId) => {
+            const payments = (studentPayments.get(studentId) || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+            const header = document.createElement('h3');
+            header.textContent = `🧑‍🎓 ${student.name} (ID: ${studentId})`;
+            content.appendChild(header);
+            const table = createTable(['Date', 'Amount', 'Synced At', 'Running Balance']);
+            let running = 0;
+            let lastDate = '';
+            payments.forEach(p => {
+              running += p.amount;
+              addRow(table, [p.date, p.amount, p.syncedAt, running]);
+              lastDate = p.date;
+            });
+            content.appendChild(table);
+            const outstanding = totalFee - running;
+            const p = document.createElement('p');
+            p.textContent = `Outstanding: ${outstanding > 0 ? outstanding : 0} | Last Payment: ${lastDate || 'None'}`;
+            if (outstanding > 0) p.style.color = 'red';
+            content.appendChild(p);
+          });
+
+          // Class summary
+          const summary = document.createElement('div');
+          const outstandingTotal = expectedTotal - totalCollected;
+          const percentage = expectedTotal > 0 ? ((totalCollected / expectedTotal) * 100).toFixed(2) : 0;
+          summary.innerHTML = `
+            <h3>Class Fees Summary</h3>
+            <p>Total Expected: ${expectedTotal}</p>
+            <p>Total Collected: ${totalCollected}</p>
+            <p>Total Outstanding: ${outstandingTotal}</p>
+            <p>Collection Percentage: ${percentage}%</p>
+          `;
+          content.appendChild(summary);
+        }
+      } catch (error) {
+        content.innerHTML = `<p>Error: ${error.message}</p>`;
+      } finally {
+        hideLoading();
+      }
+    };
+
+    // Helper to create table
+    function createTable(headers) {
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const tr = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        tr.appendChild(th);
+      });
+      thead.appendChild(tr);
+      table.appendChild(thead);
+      table.appendChild(document.createElement('tbody'));
+      return table;
+    }
+
+    // Add row to table
+    function addRow(table, cells) {
+      const tr = document.createElement('tr');
+      cells.forEach(c => {
+        const td = document.createElement('td');
+        td.textContent = c;
+        tr.appendChild(td);
+      });
+      table.querySelector('tbody').appendChild(tr);
+    }
+
+    // Initial view
+    showSection('auth-section');
+  </script>
+</body>
+</html>
