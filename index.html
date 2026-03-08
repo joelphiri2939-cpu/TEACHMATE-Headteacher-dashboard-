@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TeachMate Headteacher Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --gradient: linear-gradient(135deg, #4e50ff 0%, #d423f9 100%);
@@ -16,6 +17,7 @@
       --secondary: #ff6f61;
       --radius: 18px;
       --shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      --alert-red: #f44336;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -149,6 +151,143 @@
       border-radius: 8px;
       text-align: center;
     }
+    
+    .student-details-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .student-details-table th, .student-details-table td {
+      padding: 12px 20px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .student-details-table th {
+      background-color: #00cc88; /* Accent color */
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .student-details-table tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .student-details-table td {
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* Exit Button Styling */
+    .exit-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #f44336; /* Red color */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin-top: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .exit-btn:hover {
+      background-color: #d32f2f; /* Darker red on hover */
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .summary-card {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--accent);
+    }
+
+    .summary-card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-card p {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    /* Alerts */
+    .alerts-section {
+      margin-bottom: 1rem;
+    }
+
+    .alert {
+      background: var(--alert-red);
+      color: var(--light);
+      padding: 0.8rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Charts */
+    .chart-container {
+      margin-top: 1rem;
+      max-width: 100%;
+    }
+
+    /* Search Input */
+    .search-input {
+      margin-bottom: 1rem;
+    }
+
+    /* Clickable Name */
+    .student-name {
+      cursor: pointer;
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .student-name:hover {
+      color: var(--secondary);
+    }
+
+    /* Tabs for Sections */
+    .section-tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1rem;
+    }
+
+    .section-tab {
+      flex: 1;
+      padding: 0.8rem;
+      text-align: center;
+      background: var(--light);
+      border: 1px solid var(--accent);
+      cursor: pointer;
+    }
+
+    .section-tab.active {
+      background: var(--accent);
+      color: var(--light);
+    }
+
+    .section-tab:hover {
+      background: var(--secondary);
+      color: var(--light);
+    }
   </style>
 </head>
 <body>
@@ -177,6 +316,7 @@
       <!-- Dashboard -->
       <div id="dashboard" class="card">
         <h2>Welcome, Headteacher</h2>
+        <div id="summary-cards" class="summary-cards"></div>
         <button id="view-teachers-btn">View Teachers</button>
         <button id="logout-btn">Logout</button>
       </div>
@@ -199,10 +339,13 @@
       <!-- Data View -->
       <div id="data-view" class="card">
         <h2>Class Data</h2>
-        <button onclick="loadSectionData('students')">Students</button>
-        <button onclick="loadSectionData('attendance')">Attendance</button>
-        <button onclick="loadSectionData('results')">Results</button>
-        <button onclick="loadSectionData('fees')">Fees</button>
+        <div id="alerts-section" class="alerts-section"></div>
+        <div class="section-tabs">
+          <button class="section-tab active" onclick="loadSectionData('students')">Students</button>
+          <button class="section-tab" onclick="loadSectionData('attendance')">Attendance</button>
+          <button class="section-tab" onclick="loadSectionData('results')">Results</button>
+          <button class="section-tab" onclick="loadSectionData('fees')">Fees</button>
+        </div>
         <div id="data-content"></div>
       </div>
     </div>
@@ -237,6 +380,7 @@
     let schoolId = null;
     let currentTeacherId = null;
     let selectedClassId = null;
+    let selectedTerm = 'Term 1'; // Default term
 
     // Show/Hide Loading
     function showLoading() {
@@ -269,6 +413,7 @@
           currentTeacherId = teacherId;
           selectedClassId = classId;
           showSection('data-view');
+          loadSectionData('students'); // Default to students on back
         } else if (page === 'dashboard') {
           showSection('dashboard');
         } else {
@@ -380,9 +525,95 @@
       showSection('auth-section');
     });
 
-    // Show Dashboard
-    function showDashboard() {
+    // Show Dashboard with Summary
+    async function showDashboard() {
       showSection('dashboard');
+      await loadSummaryCards();
+    }
+
+    // Load Summary Cards (School-wide)
+    async function loadSummaryCards() {
+      showLoading();
+      const summaryDiv = document.getElementById('summary-cards');
+      summaryDiv.innerHTML = '';
+      try {
+        // Teachers count
+        const teachersSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers'));
+        const teachersCount = teachersSnap.size;
+
+        // Students count (aggregate across teachers)
+        let studentsCount = 0;
+        let classesCount = 0;
+        let totalAttendanceEntries = 0;
+        let presentCount = 0;
+        let totalFeesCollected = 0;
+        let totalFeesExpected = 0;
+        let totalScores = 0;
+        let scoresCount = 0;
+
+        for (const teacherDoc of teachersSnap.docs) {
+          // Classes per teacher
+          const classesSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'classes'));
+          classesCount += classesSnap.size;
+
+          // Students per teacher
+          const studentsSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'students'));
+          studentsCount += studentsSnap.size;
+
+          // Fees config and history for expected and collected
+          for (const classDoc of classesSnap.docs) {
+            const configRef = doc(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'feesConfig', classDoc.id);
+            const configSnap = await getDoc(configRef);
+            const classTotalFee = configSnap.exists() ? configSnap.data().totalFee || 0 : 0;
+            const classStudentsSnap = await getDocs(query(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'students'), where('classId', '==', classDoc.id)));
+            const classStudentsCount = classStudentsSnap.size;
+            totalFeesExpected += classTotalFee * classStudentsCount;
+
+            // Fees history
+            const feesQ = query(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'feesHistory'), where('classId', '==', classDoc.id));
+            const feesSnap = await getDocs(feesQ);
+            feesSnap.forEach(feeDoc => {
+              totalFeesCollected += feeDoc.data().amount || 0;
+            });
+          }
+
+          // Attendance aggregate
+          const attendanceSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'attendanceHistory'));
+          attendanceSnap.forEach(attDoc => {
+            totalAttendanceEntries++;
+            if (attDoc.data().present) presentCount++;
+          });
+
+          // Results aggregate
+          const resultsSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'results'));
+          resultsSnap.forEach(resDoc => {
+            const scores = resDoc.data().scores || {};
+            Object.values(scores).forEach(score => {
+              totalScores += score;
+              scoresCount++;
+            });
+          });
+        }
+
+        const attendancePct = totalAttendanceEntries > 0 ? ((presentCount / totalAttendanceEntries) * 100).toFixed(0) : 0;
+        const feesPct = totalFeesExpected > 0 ? ((totalFeesCollected / totalFeesExpected) * 100).toFixed(0) : 0;
+        const avgScore = scoresCount > 0 ? (totalScores / scoresCount).toFixed(0) : 0;
+        const avgGrade = getZambianGrade(avgScore);
+
+        // Render cards
+        summaryDiv.innerHTML = `
+          <div class="summary-card"><h3>👩‍🏫 Teachers</h3><p>${teachersCount}</p></div>
+          <div class="summary-card"><h3>👨‍🎓 Students</h3><p>${studentsCount}</p></div>
+          <div class="summary-card"><h3>📚 Classes</h3><p>${classesCount}</p></div>
+          <div class="summary-card"><h3>📊 Attendance</h3><p>${attendancePct}%</p></div>
+          <div class="summary-card"><h3>💰 Fees Collected</h3><p>${feesPct}%</p></div>
+          <div class="summary-card"><h3>🎓 Academic Average</h3><p>${avgGrade}</p></div>
+        `;
+      } catch (error) {
+        console.error('Error loading summary:', error);
+      } finally {
+        hideLoading();
+      }
     }
 
     // View Teachers Button
@@ -453,6 +684,7 @@
       selectedClassId = document.getElementById('classes-select').value;
       if (!selectedClassId) return alert('Select a class');
       showSection('data-view', { teacherId: currentTeacherId, classId: selectedClassId });
+      loadSectionData('students'); // Default to students
     });
 
     // Zambian Grade Computation
@@ -470,9 +702,20 @@
 
     // Load Section Data
     window.loadSectionData = async function(section) {
+      // Update active tab
+      document.querySelectorAll('.section-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.onclick.toString().includes(`'${section}'`)) {
+          tab.classList.add('active');
+        }
+      });
+
       showLoading();
       const content = document.getElementById('data-content');
       content.innerHTML = '';
+      const alertsDiv = document.getElementById('alerts-section');
+      alertsDiv.innerHTML = '';
+
       try {
         if (section === 'students') {
           const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), where('classId', '==', selectedClassId));
@@ -483,22 +726,77 @@
             const p = document.createElement('p');
             p.textContent = `Total Students: ${data.size}`;
             content.appendChild(p);
-            const table = createTable(['Avatar', 'ID', 'Name', 'Phone', 'Address']);
+
+            // Search input
+            const searchInput = document.createElement('input');
+            searchInput.classList.add('search-input');
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Search Student by Name';
+            content.appendChild(searchInput);
+
+            // Students list container
+            const studentsList = document.createElement('div');
+            studentsList.id = 'students-list';
+
             data.forEach(doc => {
               const d = doc.data();
-              addRow(table, ['🧑‍🎓', doc.id, d.name, d.phone, d.address]);
+              const studentItem = document.createElement('div');
+              studentItem.classList.add('student-item');
+              studentItem.dataset.name = d.name.toLowerCase();
+              studentItem.innerHTML = `
+                <span>🧑‍🎓</span>
+                <div>
+                  <p class="student-name" data-student-id="${doc.id}">${d.name}</p>
+                </div>
+              `;
+              studentsList.appendChild(studentItem);
             });
-            content.appendChild(table);
+            content.appendChild(studentsList);
+
+            // Clickable names
+            document.querySelectorAll('.student-name').forEach(name => {
+              name.addEventListener('click', async (e) => {
+                const studentId = e.target.dataset.studentId;
+                await loadStudentDetails(studentId);
+              });
+            });
+
+            // Live search
+            searchInput.addEventListener('input', (e) => {
+              const query = e.target.value.toLowerCase();
+              document.querySelectorAll('.student-item').forEach(item => {
+                item.style.display = item.dataset.name.includes(query) ? 'flex' : 'none';
+              });
+            });
           }
         } else if (section === 'attendance') {
-          const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'attendanceHistory'), where('classId', '==', selectedClassId), orderBy('date', 'desc'));
+          // Term selector
+          const termSelect = document.createElement('select');
+          termSelect.innerHTML = `
+            <option value="Term 1">Term 1</option>
+            <option value="Term 2">Term 2</option>
+            <option value="Term 3">Term 3</option>
+          `;
+          termSelect.value = selectedTerm;
+          termSelect.addEventListener('change', (e) => {
+            selectedTerm = e.target.value;
+            loadSectionData('attendance');
+          });
+          content.appendChild(termSelect);
+
+          const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'attendanceHistory'), 
+                          where('classId', '==', selectedClassId),
+                          where('term', '==', selectedTerm),
+                          orderBy('date', 'desc'));
           const data = await getDocs(q);
           if (data.empty) {
-            content.innerHTML = '<p class="empty-state">No attendance recorded yet.</p>';
+            content.innerHTML += '<p class="empty-state">No attendance recorded yet for this term.</p>';
           } else {
             let totalEntries = 0;
             let presentCount = 0;
             let mostRecentDate = '';
+            const attendanceByDate = new Map(); // For chart
+
             const table = createTable(['Date', 'Student ID', 'Present', 'Term', 'Week', 'Synced At']);
             data.forEach(doc => {
               const d = doc.data();
@@ -506,14 +804,69 @@
               totalEntries++;
               if (d.present) presentCount++;
               if (!mostRecentDate || d.date > mostRecentDate) mostRecentDate = d.date;
+
+              // Aggregate for chart
+              const dateKey = d.date.substring(0, 7); // Monthly aggregate
+              const entry = attendanceByDate.get(dateKey) || { total: 0, present: 0 };
+              entry.total++;
+              if (d.present) entry.present++;
+              attendanceByDate.set(dateKey, entry);
             });
             content.appendChild(table);
+
+            const attendancePct = ((presentCount / totalEntries) * 100).toFixed(2);
             const summary = document.createElement('div');
             summary.innerHTML = `
-              <p>Attendance Percentage: ${((presentCount / totalEntries) * 100).toFixed(2)}%</p>
+              <p>Attendance Percentage: ${attendancePct}%</p>
               <p>Most Recent Marking Date: ${mostRecentDate}</p>
             `;
             content.appendChild(summary);
+
+            // Risk alert
+            if (attendancePct < 60) {
+              const alert = document.createElement('div');
+              alert.classList.add('alert');
+              alert.textContent = '⚠️ ATTENDANCE RISK: Attendance is below Ministry recommended standard.';
+              alertsDiv.appendChild(alert);
+            }
+
+            // Attendance Trend Chart
+            const chartContainer = document.createElement('div');
+            chartContainer.classList.add('chart-container');
+            const canvas = document.createElement('canvas');
+            canvas.id = 'attendanceChart';
+            chartContainer.appendChild(canvas);
+            content.appendChild(chartContainer);
+
+            const labels = Array.from(attendanceByDate.keys()).sort();
+            const dataPoints = labels.map(label => {
+              const entry = attendanceByDate.get(label);
+              return (entry.present / entry.total * 100).toFixed(2);
+            });
+
+            new Chart(canvas, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'Attendance %',
+                  data: dataPoints,
+                  
+                  borderColor: getComputedStyle(document.documentElement)
+  .getPropertyValue('--accent')
+  .trim(),
+                  
+                  
+                  fill: false
+                }]
+              },
+              options: {
+                responsive: true,
+                scales: {
+                  y: { min: 0, max: 100 }
+                }
+              }
+            });
           }
         } else if (section === 'results') {
           const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'), where('classId', '==', selectedClassId));
@@ -521,6 +874,10 @@
           if (data.empty) {
             content.innerHTML = '<p class="empty-state">No results recorded yet.</p>';
           } else {
+            let overallTotalScore = 0;
+            let overallCount = 0;
+            const overallGradeDist = new Map();
+
             data.forEach(doc => {
               const d = doc.data();
               const header = document.createElement('h3');
@@ -536,16 +893,65 @@
                   addRow(table, [studentId, score, grade]);
                   totalScore += score;
                   count++;
+                  overallTotalScore += score;
+                  overallCount++;
                   gradeDist.set(grade, (gradeDist.get(grade) || 0) + 1);
+                  overallGradeDist.set(grade, (overallGradeDist.get(grade) || 0) + 1);
                 });
               }
               content.appendChild(table);
               const summary = document.createElement('div');
-              summary.innerHTML = `<p>Class Average: ${(totalScore / count).toFixed(2)}</p><h4>Grade Distribution:</h4>`;
+              summary.innerHTML = `<p>Class Average: ${(totalScore / count || 0).toFixed(2)}</p><h4>Grade Distribution:</h4>`;
               const distTable = createTable(['Grade', 'Count']);
               gradeDist.forEach((cnt, grd) => addRow(distTable, [grd, cnt]));
               summary.appendChild(distTable);
               content.appendChild(summary);
+            });
+
+            // Overall Academic Risk
+            let failCount = 0;
+            overallGradeDist.forEach((cnt, grd) => {
+              if (['7 (Pass)', '8 (Pass)', '9 (Fail)'].includes(grd)) failCount += cnt;
+            });
+            if (failCount > overallCount / 2) {
+              const alert = document.createElement('div');
+              alert.classList.add('alert');
+              alert.textContent = '⚠️ ACADEMIC PERFORMANCE WARNING: High failure rate detected.';
+              alertsDiv.appendChild(alert);
+            }
+
+            // Grade Distribution Chart
+            const chartContainer = document.createElement('div');
+            chartContainer.classList.add('chart-container');
+            const canvas = document.createElement('canvas');
+            canvas.id = 'gradeChart';
+            chartContainer.appendChild(canvas);
+            content.appendChild(chartContainer);
+
+            const labels = Array.from(overallGradeDist.keys()).sort();
+            const dataPoints = labels.map(label => overallGradeDist.get(label));
+
+            new Chart(canvas, {
+              type: 'bar',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'Count',
+                  data: dataPoints,
+                  
+                  backgroundColor: getComputedStyle(document.documentElement)
+  .getPropertyValue('--accent')
+  .trim()
+                  
+                  
+                }]
+              },
+              options: {
+                responsive: true,
+                scales: {
+                  y: { beginAtZero: true }
+                }
+              }
             });
           }
         } else if (section === 'fees') {
@@ -554,76 +960,139 @@
           const configSnap = await getDoc(configRef);
           const totalFee = configSnap.exists() ? configSnap.data().totalFee || 0 : 0;
 
-          // Load students
+          // Load students for map
           const studentsQ = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), where('classId', '==', selectedClassId));
-          const studentsData = await getDocs(studentsQ);
-          if (studentsData.empty) {
-            content.innerHTML = '<p class="empty-state">No fees data available (no students).</p>';
-            return;
-          }
-          const numStudents = studentsData.size;
-          const expectedTotal = totalFee * numStudents;
+          const studentsSnap = await getDocs(studentsQ);
           const studentsMap = new Map();
-          studentsData.forEach(doc => {
-            studentsMap.set(doc.id, {name: doc.data().name});
+          let studentCount = 0;
+          studentsSnap.forEach(doc => {
+            studentsMap.set(doc.id, doc.data());
+            studentCount++;
           });
+          const expectedTotal = totalFee * studentCount;
 
           // Load feesHistory
           const feesQ = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'feesHistory'), where('classId', '==', selectedClassId));
           const feesData = await getDocs(feesQ);
           if (feesData.empty) {
             content.innerHTML = '<p class="empty-state">No fees recorded yet.</p>';
-          }
-          const studentPayments = new Map();
-          let totalCollected = 0;
-          feesData.forEach(doc => {
-            const d = doc.data();
-            if (!studentPayments.has(d.studentId)) studentPayments.set(d.studentId, []);
-            studentPayments.get(d.studentId).push({date: d.date, amount: d.amount, syncedAt: d.syncedAt || 'N/A'});
-            totalCollected += d.amount;
-          });
-
-          // Per student
-          studentsMap.forEach((student, studentId) => {
-            const payments = (studentPayments.get(studentId) || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-            const header = document.createElement('h3');
-            header.textContent = `🧑‍🎓 ${student.name} (ID: ${studentId})`;
-            content.appendChild(header);
-            const table = createTable(['Date', 'Amount', 'Synced At', 'Running Balance']);
-            let running = 0;
-            let lastDate = '';
-            payments.forEach(p => {
-              running += p.amount;
-              addRow(table, [p.date, p.amount, p.syncedAt, running]);
-              lastDate = p.date;
+          } else {
+            const studentPayments = new Map();
+            let totalCollected = 0;
+            feesData.forEach(doc => {
+              const d = doc.data();
+              if (!studentPayments.has(d.studentId)) studentPayments.set(d.studentId, []);
+              studentPayments.get(d.studentId).push({date: d.date, amount: d.amount, syncedAt: d.syncedAt || 'N/A'});
+              totalCollected += d.amount;
             });
-            content.appendChild(table);
-            const outstanding = totalFee - running;
-            const p = document.createElement('p');
-            p.textContent = `Outstanding: ${outstanding > 0 ? outstanding : 0} | Last Payment: ${lastDate || 'None'}`;
-            if (outstanding > 0) p.style.color = 'red';
-            content.appendChild(p);
-          });
 
-          // Class summary
-          const summary = document.createElement('div');
-          const outstandingTotal = expectedTotal - totalCollected;
-          const percentage = expectedTotal > 0 ? ((totalCollected / expectedTotal) * 100).toFixed(2) : 0;
-          summary.innerHTML = `
-            <h3>Class Fees Summary</h3>
-            <p>Total Expected: ${expectedTotal}</p>
-            <p>Total Collected: ${totalCollected}</p>
-            <p>Total Outstanding: ${outstandingTotal}</p>
-            <p>Collection Percentage: ${percentage}%</p>
-          `;
-          content.appendChild(summary);
+            // Per student
+            studentsMap.forEach((student, studentId) => {
+              const payments = (studentPayments.get(studentId) || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+              const header = document.createElement('h3');
+              header.textContent = `🧑‍🎓 ${student.name} (ID: ${studentId})`;
+              content.appendChild(header);
+              const table = createTable(['Date', 'Amount', 'Synced At', 'Running Balance']);
+              let running = 0;
+              let lastDate = '';
+              payments.forEach(p => {
+                running += p.amount;
+                addRow(table, [p.date, p.amount, p.syncedAt, running]);
+                lastDate = p.date;
+              });
+              content.appendChild(table);
+              const outstanding = totalFee - running;
+              const p = document.createElement('p');
+              p.textContent = `Outstanding: ${outstanding > 0 ? outstanding : 0} | Last Payment: ${lastDate || 'None'}`;
+              if (outstanding > 0) p.style.color = 'red';
+              content.appendChild(p);
+            });
+
+            // Class summary
+            const outstandingTotal = expectedTotal - totalCollected;
+            const percentage = expectedTotal > 0 ? ((totalCollected / expectedTotal) * 100).toFixed(2) : 0;
+            const summary = document.createElement('div');
+            summary.innerHTML = `
+              <h3>Class Fees Summary</h3>
+              <p>Total Expected: ${expectedTotal}</p>
+              <p>Total Collected: ${totalCollected}</p>
+              <p>Total Outstanding: ${outstandingTotal}</p>
+              <p>Collection Percentage: ${percentage}%</p>
+            `;
+            content.appendChild(summary);
+
+            // Risk alert
+            if (percentage < 50) {
+              const alert = document.createElement('div');
+              alert.classList.add('alert');
+              alert.textContent = '⚠️ FEES COLLECTION CRITICAL: Less than half of expected fees collected.';
+              alertsDiv.appendChild(alert);
+            }
+          }
         }
       } catch (error) {
-        content.innerHTML = `<p>Error: ${error.message}</p>`;
+        content.innerHTML = `<p class="empty-state">Error: ${error.message}</p>`;
       } finally {
         hideLoading();
       }
     };
+
+    // Load Student Details
+    async function loadStudentDetails(studentId) {
+      const content = document.getElementById('data-content');
+      showLoading();
+      try {
+        const studentRef = doc(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students', studentId);
+        const studentSnap = await getDoc(studentRef);
+        if (!studentSnap.exists()) {
+          content.innerHTML = '<p class="empty-state">Student not found.</p>';
+          return;
+        }
+        const student = studentSnap.data();
+
+        // Clear content and show profile
+        content.innerHTML = '';
+
+        // Create the table for student details
+        const detailsTable = document.createElement('table');
+        detailsTable.classList.add('student-details-table');
+
+        // Add the table header
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th>Field</th>
+            <th>Details</th>
+          </tr>
+        `;
+        detailsTable.appendChild(thead);
+
+        // Add the table body with student data
+        const tbody = document.createElement('tbody');
+        addRow(tbody, ['Name', student.name || 'N/A']);
+        addRow(tbody, ['TS No', student.tsNumber || 'N/A']);
+        addRow(tbody, ['Phone', student.phone || 'N/A']);
+        addRow(tbody, ['Address', student.address || 'N/A']);
+        addRow(tbody, ['Email', student.email || 'N/A']);
+        detailsTable.appendChild(tbody);
+
+        content.appendChild(detailsTable);
+
+        // Add Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.classList.add('exit-btn');
+        closeBtn.addEventListener('click', () => {
+          loadSectionData('students'); // Reload students list
+        });
+
+        content.appendChild(closeBtn);
+      } catch (error) {
+        content.innerHTML = `<p class="empty-state">Error loading student details: ${error.message}</p>`;
+      } finally {
+        hideLoading();
+      }
+    }
 
     // Helper to create table
     function createTable(headers) {
@@ -641,15 +1110,19 @@
       return table;
     }
 
-    // Add row to table
-    function addRow(table, cells) {
+    // Add row to table (accepts table or tbody)
+    function addRow(element, cells) {
       const tr = document.createElement('tr');
       cells.forEach(c => {
         const td = document.createElement('td');
         td.textContent = c;
         tr.appendChild(td);
       });
-      table.querySelector('tbody').appendChild(tr);
+      if (element.tagName === 'TABLE') {
+        element.querySelector('tbody').appendChild(tr);
+      } else {
+        element.appendChild(tr);
+      }
     }
 
     // Initial view
