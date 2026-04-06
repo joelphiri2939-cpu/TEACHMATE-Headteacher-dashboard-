@@ -726,24 +726,54 @@ window.loadSectionData = async function(section) {
       }
     } 
     
-    else if (section === 'attendance') {
+    
+    
+    
+   else if (section === 'attendance') {
       const filterDiv = document.createElement('div');
       filterDiv.style.display = 'flex';
       filterDiv.style.gap = '15px';
       filterDiv.style.marginBottom = '1.5rem';
+      filterDiv.style.flexWrap = 'wrap'; // Ensures it looks good on mobile/APK screens!
+      filterDiv.style.alignItems = 'center';
       
+      // 1. Term Filter (Already existing)
       const termSelect = document.createElement('select');
       termSelect.innerHTML = `<option value="1">Filter: Term 1</option><option value="2">Filter: Term 2</option><option value="3">Filter: Term 3</option>`;
       termSelect.value = selectedTerm;
       termSelect.style.width = 'auto';
-      termSelect.addEventListener('change', (e) => { selectedTerm = e.target.value; window.loadSectionData('attendance'); });
+      termSelect.style.padding = '8px';
+      termSelect.style.borderRadius = '5px';
+      
+      // 2. NEW: Week Filter
+      const weekInput = document.createElement('input');
+      weekInput.type = 'number';
+      weekInput.placeholder = 'Filter Week (e.g. 4)';
+      weekInput.style.padding = '8px';
+      weekInput.style.width = '160px';
+      weekInput.style.borderRadius = '5px';
+      
+      // 3. NEW: Student Search Filter
+      const searchInput = document.createElement('input');
+      searchInput.type = 'text';
+      searchInput.placeholder = 'Search Student ID or Name...';
+      searchInput.style.padding = '8px';
+      searchInput.style.width = '250px';
+      searchInput.style.borderRadius = '5px';
       
       filterDiv.appendChild(termSelect);
+      filterDiv.appendChild(weekInput);
+      filterDiv.appendChild(searchInput);
       content.appendChild(filterDiv);
+      
+      // Create a wrapper for the table so we can easily replace its contents when filtering
+      const tableWrapper = document.createElement('div');
+      content.appendChild(tableWrapper);
       
       const classIdSpace = selectedClassId.replace('_', ' ');
       const classIdUnderscore = selectedClassId.replace(' ', '_');
       
+      // Fetching ONLY by Class and Term to avoid complex Firestore Index requirements
       const q = query(
         collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'attendanceHistory'),
         where('classId', 'in', [classIdSpace, classIdUnderscore]),
@@ -753,26 +783,86 @@ window.loadSectionData = async function(section) {
       const data = await getDocs(q);
       
       if (data.empty) {
-        const p = document.createElement('p');
-        p.className = 'empty-state';
-        p.textContent = 'No attendance logs found for this term.';
-        content.appendChild(p);
+        tableWrapper.innerHTML = '<p class="empty-state">No attendance logs found for this term.</p>';
       } else {
-        const tableContainer = createTable(['Log Date', 'Student ID', 'Status', 'Term', 'Week', 'Cloud Sync Time']);
-        let records = [];
-        data.forEach(doc => records.push(doc.data()));
+        // Store all fetched records in a master array so we can filter them instantly
+        let allRecords = [];
+        data.forEach(doc => allRecords.push(doc.data()));
         
-        records.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        // Sort newest first
+        allRecords.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
         
-        records.forEach(d => {
-          let syncDisplay = d.syncedAt ? parseFirestoreDate(d.syncedAt).toLocaleString() : 'Pending';
-          let statusHtml = d.present ? '<span style="color:var(--accent); font-weight:bold;"><i class="fas fa-check-circle"></i> Present</span>' : '<span style="color:var(--alert-red); font-weight:bold;"><i class="fas fa-times-circle"></i> Absent</span>';
-          addRow(tableContainer, [d.date, d.studentId, statusHtml, d.term, d.week, syncDisplay]);
+        // --- THE FILTERING ENGINE ---
+        const renderFilteredTable = () => {
+          tableWrapper.innerHTML = ''; // Clear the current table
+          
+          const weekFilterValue = weekInput.value.trim();
+          const searchFilterValue = searchInput.value.trim().toLowerCase();
+          
+          // Filter the master array based on what the headteacher typed
+          const filteredRecords = allRecords.filter(d => {
+            // 1. Check Week Match
+            const matchesWeek = weekFilterValue === '' || String(d.week) === weekFilterValue;
+            
+            // 2. Check Student ID or Name Match (Safely handles missing data)
+            const studentIdStr = d.studentId ? String(d.studentId).toLowerCase() : '';
+            // NOTE: If your database has 'studentName', it will search that too!
+            const studentNameStr = d.studentName ? String(d.studentName).toLowerCase() : ''; 
+            
+            const matchesSearch = searchFilterValue === '' || 
+                                  studentIdStr.includes(searchFilterValue) || 
+                                  studentNameStr.includes(searchFilterValue);
+            
+            // Record must match BOTH the week (if entered) AND the search term (if entered)
+            return matchesWeek && matchesSearch;
+          });
+          
+          // If the filters resulted in 0 matches
+          if (filteredRecords.length === 0) {
+            tableWrapper.innerHTML = '<p class="empty-state" style="margin-top: 20px; font-weight: bold;">No records match your filters.</p>';
+            return;
+          }
+          
+          // Build the table with the filtered data
+          const tableContainer = createTable(['Log Date', 'Student ID', 'Status', 'Term', 'Week', 'Cloud Sync Time']);
+          
+          filteredRecords.forEach(d => {
+            let syncDisplay = d.syncedAt ? parseFirestoreDate(d.syncedAt).toLocaleString() : 'Pending';
+            let statusHtml = d.present 
+              ? '<span style="color:var(--accent); font-weight:bold;"><i class="fas fa-check-circle"></i> Present</span>' 
+              : '<span style="color:var(--alert-red); font-weight:bold;"><i class="fas fa-times-circle"></i> Absent</span>';
+            
+            addRow(tableContainer, [d.date, d.studentId, statusHtml, d.term, d.week, syncDisplay]);
+          });
+          
+          tableWrapper.appendChild(tableContainer);
+          
+          // Re-apply sortable logic to the newly created table
+          if (typeof makeSortable === 'function') {
+            makeSortable(tableContainer);
+          }
+        };
+
+        // 1. Initial render when data first loads
+        renderFilteredTable();
+
+        // 2. Event Listeners for the filters
+        
+        // Term still triggers a full database fetch because we only pull one term at a time
+        termSelect.addEventListener('change', (e) => { 
+          selectedTerm = e.target.value; 
+          window.loadSectionData('attendance'); 
         });
-        content.appendChild(tableContainer);
-        makeSortable(tableContainer);
+        
+        // 'input' event makes it filter INSTANTLY as the user types ⚡
+        weekInput.addEventListener('input', renderFilteredTable);
+        searchInput.addEventListener('input', renderFilteredTable);
       }
     }
+
+    
+    
+    
     
     else if (section === 'results') {
       const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'), where('classId', '==', selectedClassId));
