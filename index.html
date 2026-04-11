@@ -677,7 +677,18 @@ window.loadSectionData = async function(section) {
 
   try {
     if (section === 'students') {
-      const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), where('classId', '==', selectedClassId));
+      
+      
+      const classIdSpace = selectedClassId.replace('_', ' ');
+const classIdUnderscore = selectedClassId.replace(' ', '_');
+
+const q = query(
+  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), 
+  where('classId', 'in', [classIdSpace, classIdUnderscore])
+);
+
+      
+      
       const data = await getDocs(q);
       if (data.empty) {
         const p = document.createElement('p');
@@ -865,7 +876,16 @@ window.loadSectionData = async function(section) {
     
     
     else if (section === 'results') {
-      const q = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'), where('classId', '==', selectedClassId));
+      
+      const classIdSpace = selectedClassId.replace('_', ' ');
+const classIdUnderscore = selectedClassId.replace(' ', '_');
+
+const q = query(
+  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'), 
+  where('classId', 'in', [classIdSpace, classIdUnderscore])
+);
+
+      
       const data = await getDocs(q);
       currentResultsData = [];
       if (data.empty) {
