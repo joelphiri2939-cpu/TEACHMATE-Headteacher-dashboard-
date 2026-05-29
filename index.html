@@ -5,194 +5,227 @@
   <meta name="viewport" content="width=1366">
   <title>TeachMate 3.0 Headteacher Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --gradient: linear-gradient(135deg, #2e8b57 0%, #228b22 100%);
-      --glass: rgba(255, 255, 255, 0.25);
-      --light: #f8f9fa;
-      --dark: #212529;
-      --text-light: #343a40;
-      --accent: #28a745;
-      --secondary: #fd7e14;
-      --radius: 16px;
-      --shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-      --alert-red: #dc3545;
-      --soft-green: #e6f3e6;
+      --g900:#052e16;--g800:#065f46;--g700:#047857;--g600:#059669;
+      --g500:#10b981;--g400:#34d399;--g300:#6ee7b7;--g100:#d1fae5;--g50:#ecfdf5;
+      --ink:#0d1f15;--ink2:#1a3326;--slate:#3d5247;--muted:#6b8f7a;
+      --wire:#c8e8d8;--bg:#f3faf6;--white:#ffffff;
+      --amber:#f59e0b;--red:#dc2626;--blue:#2563eb;--soft-red:#fef2f2;
+      --gradient:linear-gradient(135deg,var(--g900) 0%,var(--g700) 50%,var(--g500) 100%);
+      --gradient-soft:linear-gradient(135deg,var(--g800),var(--g600));
+      --shadow-sm:0 1px 4px rgba(0,0,0,.06),0 2px 8px rgba(5,46,22,.06);
+      --shadow-md:0 4px 16px rgba(5,46,22,.1),0 1px 4px rgba(0,0,0,.06);
+      --shadow-lg:0 12px 40px rgba(5,46,22,.14),0 4px 16px rgba(0,0,0,.08);
+      --shadow-xl:0 24px 64px rgba(0,0,0,.18);
+      --radius:16px;--radius-sm:8px;--radius-lg:20px;
+      --ease:cubic-bezier(.22,1,.36,1);
+      --ff-display:'Instrument Serif',Georgia,serif;
+      --ff-body:'Outfit',system-ui,sans-serif;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Poppins', system-ui, sans-serif; background: var(--light); color: var(--text-light); min-height: 100vh; display: flex; flex-direction: column; line-height: 1.6; }
-    header { background: var(--gradient); padding: 1.25rem 2rem; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { font-size: 1.85rem; font-weight: 700; color: var(--light); letter-spacing: -0.5px; }
-    #school-name-display { font-size: 1.25rem; color: var(--light); font-weight: 500; }
-
-    .app-container { display: flex; flex: 1; max-width: 1366px; margin: auto; width: 100%; }
-    .sidebar { display: none; width: 260px; background: var(--light); padding: 1.5rem; box-shadow: var(--shadow); height: calc(100vh - 68px); position: sticky; top: 68px; overflow-y: auto; border-right: 1px solid #e0e0e0; }
-    .sidebar ul { list-style: none; }
-    .sidebar li { margin-bottom: 0.75rem; }
-    .sidebar a { display: flex; align-items: center; gap: 12px; padding: 0.95rem 1.25rem; background: var(--glass); border-radius: 10px; text-decoration: none; color: var(--text-light); font-weight: 600; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-    .sidebar a:hover, .sidebar a.active { background: var(--accent); color: white; transform: translateX(6px); }
-
-    .content-container { flex: 1; padding: 2.5rem 2rem; overflow-y: auto; overflow-x: hidden; width: 100%; }
-    .card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(16px); border-radius: var(--radius); padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid rgba(40,167,69,0.15); margin-bottom: 2rem; transition: transform 0.2s; max-width: 100%; overflow: hidden; position: relative; }
-    .card:hover { transform: translateY(-4px); }
-    .card h2 { font-size: 1.75rem; margin-bottom: 1.5rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-
-    input, select, button { width: 100%; padding: 1rem 1.25rem; margin: 0.6rem 0; border-radius: 10px; border: 1px solid #ced4da; font-size: 1rem; transition: all 0.2s; }
-    input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(40,167,69,0.15); }
-    button { background: var(--accent); color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; }
-    button:hover { background: var(--secondary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(253, 126, 20, 0.2); }
-
-    /* --- ADVANCED PROFESSIONAL TABLES --- */
-    .enhanced-table-container { 
-      overflow-x: auto; 
-      -webkit-overflow-scrolling: touch; 
-      width: 100%; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-      background: white; 
-      margin-top: 1.5rem; 
-      border: 1px solid #e9f0e9;
-    }
-    
-    .enhanced-table-container::-webkit-scrollbar { height: 8px; }
-    .enhanced-table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 0 0 12px 12px; }
-    .enhanced-table-container::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 12px; }
-    .enhanced-table-container::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-    .enhanced-table { width: 100%; border-collapse: collapse; min-width: max-content; background: white; }
-    .enhanced-table th { 
-      background: var(--gradient); 
-      color: white; 
-      padding: 1.25rem; 
-      font-weight: 600; 
-      text-align: left; 
-      position: sticky; 
-      top: 0; 
-      z-index: 10; 
-      cursor: pointer; 
-      white-space: nowrap; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      letter-spacing: 0.5px;
-    }
-    .enhanced-table th:hover { background: #1e6b3a; }
-    .enhanced-table td { padding: 1.1rem 1.25rem; border-bottom: 1px solid #e9f0e9; white-space: nowrap; color: var(--text-light); }
-    .enhanced-table tr { transition: background 0.2s ease; }
-    .enhanced-table tr:nth-child(even) { background: #fafafa; }
-    .enhanced-table tr:hover { background: var(--soft-green); }
-    .enhanced-table .highlight-red { color: var(--alert-red); font-weight: 700; background: rgba(220, 53, 69, 0.1); padding: 4px 8px; border-radius: 6px; }
-
-    .teacher-item, .student-item { display: flex; align-items: center; margin-bottom: 1.25rem; padding: 1.25rem; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: all 0.2s; border: 1px solid #f1f1f1; }
-    .teacher-item:hover, .student-item:hover { box-shadow: var(--shadow); transform: translateY(-3px); border-color: var(--accent); }
-    .teacher-item span, .student-item span { font-size: 2rem; margin-right: 1.5rem; background: var(--soft-green); padding: 15px; border-radius: 50%; }
-
-    .empty-state { text-align: center; color: #6c757d; margin: 3rem 0; font-size: 1.2rem; font-weight: 500; background: #f8f9fa; padding: 2rem; border-radius: 12px; border: 1px dashed #ced4da; }
-
-    #auth-section, #dashboard, #teacher-selection, #class-selection, #data-view, #settings-section { display: none; }
-    #loading-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    #loading-modal .modal-content { background: white; padding: 3rem; border-radius: 16px; text-align: center; box-shadow: var(--shadow); }
-
-    .exit-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; background: white; color: var(--alert-red); border: 2px solid var(--alert-red); border-radius: 8px; margin-top: 1.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-    .exit-btn:hover { background: var(--alert-red); color: white; transform: scale(1.02); }
-
-    .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
-    .summary-card { background: white; border-radius: var(--radius); padding: 1.75rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #e9ecef; transition: all 0.3s; position: relative; overflow: hidden; }
-    .summary-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--gradient); }
-    .summary-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); border-color: var(--accent); }
-    .summary-card h3 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #6c757d; font-weight: 600; }
-    .summary-card p { font-size: 2.5rem; font-weight: 800; color: var(--text-light); }
-
-    .chart-container { margin-top: 2rem; background: white; padding: 2rem; border-radius: var(--radius); border: 1px solid #e9ecef; }
-    .search-input { margin-bottom: 1.5rem; font-size: 1.05rem; }
-
-    .section-tabs { display: flex; gap: 15px; margin-bottom: 2rem; flex-wrap: wrap; background: #f8f9fa; padding: 10px; border-radius: 12px; }
-    .section-tab { flex: 1 1 auto; padding: 14px 28px; border: none; background: transparent; color: #6c757d; font-weight: 700; font-size: 1.05rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; justify-content: center; }
-    .section-tab:hover { background: #e9ecef; color: var(--text-light); }
-    .section-tab.active { background: white; color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-
-    .export-btn { background: var(--secondary); margin-top: 1.25rem; }
-    .export-btn:hover { background: #e06b00; }
-
-    .student-fees-card { background: white; border: 1px solid #e9ecef; border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); transition: all 0.2s; border-left: 5px solid var(--accent); }
-    .student-fees-card:hover { box-shadow: var(--shadow); transform: translateX(4px); }
-
-    /* MODALS */
-    #updates-modal, #analytics-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
-    .modal-content { background: white; max-width: 800px; width: 100%; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); padding: 2.5rem; max-height: 88vh; overflow-y: auto; position: relative; }
-    .modal-close { position: absolute; top: 20px; right: 25px; font-size: 2.5rem; cursor: pointer; color: #adb5bd; transition: color 0.2s; line-height: 1; }
-    .modal-close:hover { color: var(--alert-red); }
-    
-    .update-card { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border-left: 5px solid var(--accent); transition: all 0.2s; display: flex; gap: 15px; align-items: flex-start; }
-    .update-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: white; }
-    .update-card i { font-size: 2rem; color: var(--accent); flex-shrink: 0; background: var(--soft-green); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-    .update-time { font-size: 0.85rem; color: #868e96; margin-top: 8px; display: block; font-weight: 500; }
-    .update-teacher-badge { background: var(--text-light); color: white; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; margin-bottom: 8px; display: inline-block; }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--ff-body);background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;line-height:1.6;font-size:15px;}
+    header{background:var(--g900);padding:0 2rem;height:68px;box-shadow:0 4px 24px rgba(0,0,0,.25);position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.06);overflow:hidden;}
+    header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g700),var(--g400),var(--g700));background-size:200% 100%;animation:headerShimmer 3s linear infinite;}
+    @keyframes headerShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    .header-logo{display:flex;align-items:center;gap:12px;}
+    .header-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--g600),var(--g400));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(52,211,153,.3);}
+    header h1{font-family:var(--ff-display);font-size:1.4rem;font-weight:400;color:#fff;letter-spacing:-.01em;}
+    header h1 em{font-style:italic;color:var(--g400);}
+    #school-name-display-header{font-size:.85rem;color:rgba(255,255,255,.55);font-weight:500;padding:4px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:20px;}
+    .header-right{display:flex;align-items:center;gap:14px;}
+    #updates-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:white;font-size:1rem;cursor:pointer;position:relative;padding:8px 10px;border-radius:10px;transition:background .2s;width:auto;margin:0;}
+    #updates-btn:hover{background:rgba(255,255,255,.18);transform:none;box-shadow:none;}
+    #updates-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:white;font-size:.72rem;padding:2px 6px;border-radius:50%;display:none;font-weight:800;box-shadow:0 2px 6px rgba(220,38,38,.4);border:2px solid var(--g900);}
+    #logout-btn{display:none;width:auto;padding:7px 18px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;margin:0;transition:background .2s;}
+    #logout-btn:hover{background:rgba(220,38,38,.8);border-color:transparent;transform:none;box-shadow:none;}
+    .app-container{display:flex;flex:1;max-width:1366px;margin:auto;width:100%;}
+    .sidebar{display:none;width:240px;background:var(--white);padding:1.5rem 1rem;box-shadow:var(--shadow-md);height:calc(100vh - 68px);position:sticky;top:68px;overflow-y:auto;border-right:1px solid var(--wire);flex-shrink:0;}
+    .sidebar-label{font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:0 12px;margin:1rem 0 .5rem;}
+    .sidebar ul{list-style:none;}
+    .sidebar li{margin-bottom:.35rem;}
+    .sidebar a{display:flex;align-items:center;gap:10px;padding:.8rem 1rem;background:transparent;border-radius:10px;text-decoration:none;color:var(--slate);font-weight:600;font-size:.9rem;transition:all .18s var(--ease);cursor:pointer;}
+    .sidebar a .nav-icon{width:32px;height:32px;border-radius:8px;background:var(--g50);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--g700);flex-shrink:0;transition:all .18s;}
+    .sidebar a:hover{background:var(--g50);color:var(--g700);}
+    .sidebar a:hover .nav-icon{background:var(--g100);}
+    .sidebar a.active{background:linear-gradient(135deg,var(--g800),var(--g600));color:white;}
+    .sidebar a.active .nav-icon{background:rgba(255,255,255,.2);color:white;}
+    .content-container{flex:1;padding:2rem;overflow-y:auto;overflow-x:hidden;min-width:0;}
+    .card{background:var(--white);border-radius:var(--radius-lg);padding:2rem;box-shadow:var(--shadow-md);border:1px solid var(--wire);margin-bottom:1.5rem;position:relative;overflow:hidden;max-width:100%;}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g700),var(--g400),var(--g700));opacity:0;transition:opacity .3s;}
+    .card:hover::before{opacity:1;}
+    .card h2{font-family:var(--ff-display);font-size:1.7rem;font-weight:400;margin-bottom:1.5rem;color:var(--g800);display:flex;align-items:center;gap:10px;}
+    .card h2 em{font-style:italic;color:var(--g600);}
+    input,select{width:100%;padding:.85rem 1rem;margin:.5rem 0;border-radius:var(--radius-sm);border:1.5px solid var(--wire);font-size:.95rem;font-family:var(--ff-body);background:var(--g50);color:var(--ink);transition:all .18s;}
+    input:focus,select:focus{outline:none;border-color:var(--g500);background:var(--white);box-shadow:0 0 0 3px rgba(16,185,129,.13);}
+    input::placeholder{color:var(--muted);}
+    button{width:100%;padding:.85rem 1.2rem;margin:.5rem 0;border-radius:var(--radius-sm);border:none;font-size:.95rem;font-family:var(--ff-body);font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--g700),var(--g500));color:white;box-shadow:0 2px 10px rgba(5,150,105,.25);transition:transform .18s var(--ease),box-shadow .18s,opacity .15s;}
+    button:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(5,150,105,.3);opacity:.95;}
+    button:active{transform:scale(.98);}
+    .summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;}
+    .summary-card{background:var(--white);border-radius:var(--radius);padding:1.5rem;text-align:center;box-shadow:var(--shadow-sm);border:1px solid var(--wire);transition:all .25s var(--ease);position:relative;overflow:hidden;}
+    .summary-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--gradient-soft);}
+    .summary-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:var(--g300);}
+    .summary-card .sc-icon{width:46px;height:46px;background:var(--g50);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto 1rem;}
+    .summary-card h3{font-size:.8rem;margin-bottom:.5rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+    .summary-card p{font-family:var(--ff-display);font-size:2.2rem;font-weight:400;color:var(--ink);line-height:1;}
+    .summary-card p.small-val{font-size:1.4rem;}
+    .subscription-panel{border-radius:var(--radius-lg);padding:1.75rem 2rem;margin-bottom:1.5rem;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+    .subscription-panel.status-active{background:linear-gradient(135deg,#052e16,#065f46);border:1px solid rgba(52,211,153,.2);box-shadow:0 8px 32px rgba(5,46,22,.25);}
+    .subscription-panel.status-pending{background:linear-gradient(135deg,#451a03,#92400e);border:1px solid rgba(251,191,36,.2);}
+    .subscription-panel.status-expired{background:linear-gradient(135deg,#450a0a,#7f1d1d);border:1px solid rgba(252,165,165,.15);}
+    .subscription-panel.status-expiring{background:linear-gradient(135deg,#1c1003,#713f12);border:1px solid rgba(251,191,36,.25);}
+    .subscription-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);background-size:200% 100%;animation:headerShimmer 2.5s linear infinite;}
+    .sub-left{display:flex;align-items:center;gap:16px;position:relative;z-index:1;}
+    .sub-icon{width:52px;height:52px;border-radius:14px;flex-shrink:0;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.6rem;}
+    .sub-info{color:#fff;}
+    .sub-label{font-size:.75rem;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;}
+    .sub-school-name{font-family:var(--ff-display);font-size:1.35rem;color:#fff;margin-bottom:6px;}
+    .sub-status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;}
+    .badge-active{background:rgba(52,211,153,.2);color:#6ee7b7;border:1px solid rgba(52,211,153,.3);}
+    .badge-pending{background:rgba(251,191,36,.15);color:#fde68a;border:1px solid rgba(251,191,36,.3);}
+    .badge-expired{background:rgba(252,165,165,.15);color:#fca5a5;border:1px solid rgba(252,165,165,.3);}
+    .badge-expiring{background:rgba(251,191,36,.15);color:#fef08a;border:1px solid rgba(251,191,36,.3);}
+    .sub-meta{display:flex;gap:20px;margin-top:8px;flex-wrap:wrap;}
+    .sub-meta-item{font-size:.8rem;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:5px;}
+    .sub-meta-item strong{color:rgba(255,255,255,.9);font-weight:700;}
+    .sub-right{position:relative;z-index:1;display:flex;align-items:center;gap:10px;}
+    .section-tabs{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;background:var(--g50);padding:8px;border-radius:var(--radius);border:1px solid var(--wire);}
+    .section-tab{flex:1 1 auto;padding:10px 18px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:.88rem;font-family:var(--ff-body);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;justify-content:center;white-space:nowrap;margin:0;box-shadow:none;width:auto;}
+    .section-tab:hover{background:var(--white);color:var(--ink);transform:none;}
+    .section-tab.active{background:linear-gradient(135deg,var(--g700),var(--g500));color:white;box-shadow:0 3px 12px rgba(5,150,105,.25);}
+    .enhanced-table-container{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;border-radius:var(--radius);box-shadow:var(--shadow-sm);background:var(--white);margin-top:1.25rem;border:1px solid var(--wire);}
+    .enhanced-table{width:100%;border-collapse:collapse;min-width:max-content;background:var(--white);}
+    .enhanced-table thead tr{background:var(--gradient);}
+    .enhanced-table th{color:white;padding:1rem 1.1rem;font-weight:700;font-size:.82rem;text-align:left;position:sticky;top:0;z-index:10;cursor:pointer;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase;transition:background .15s;user-select:none;}
+    .enhanced-table th:hover{background:rgba(255,255,255,.15);}
+    .enhanced-table th .sort-icon{opacity:.5;font-size:.7rem;margin-left:4px;}
+    .enhanced-table td:first-child,.enhanced-table th:first-child{font-weight:700;white-space:nowrap;}
+    .enhanced-table td:first-child{color:var(--g700);background:rgba(5,150,105,.04);}
+    .enhanced-table td{padding:.9rem 1.1rem;border-bottom:1px solid var(--wire);white-space:nowrap;color:var(--ink);font-size:.9rem;}
+    .enhanced-table tr:nth-child(even){background:var(--g50);}
+    .enhanced-table tr:hover{background:rgba(16,185,129,.07);}
+    .enhanced-table tr:last-child td{border-bottom:none;}
+    .badge-present{color:var(--g600);font-weight:700;display:flex;align-items:center;gap:4px;}
+    .badge-absent{color:var(--red);font-weight:700;display:flex;align-items:center;gap:4px;}
+    .highlight-red{color:var(--red);font-weight:700;background:rgba(220,38,38,.08);padding:3px 8px;border-radius:6px;}
+    .highlight-green{color:var(--g600);font-weight:700;background:rgba(16,185,129,.08);padding:3px 8px;border-radius:6px;}
+    .date-chip{display:inline-flex;align-items:center;gap:4px;background:var(--g50);border:1px solid var(--g100);color:var(--g700);padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700;}
+    .teacher-item{display:flex;align-items:center;margin-bottom:1rem;padding:1.1rem 1.25rem;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);transition:all .2s var(--ease);border:1px solid var(--wire);gap:1rem;}
+    .teacher-item:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--g300);}
+    .teacher-avatar{width:52px;height:52px;background:linear-gradient(135deg,var(--g700),var(--g400));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+    .student-fees-card{background:var(--white);border:1px solid var(--wire);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.25rem;box-shadow:var(--shadow-sm);transition:all .2s;border-left:4px solid var(--g500);}
+    .student-fees-card:hover{box-shadow:var(--shadow-md);transform:translateX(3px);}
+    .chart-container{margin-top:1.5rem;background:var(--white);padding:1.5rem;border-radius:var(--radius);border:1px solid var(--wire);box-shadow:var(--shadow-sm);}
+    .empty-state{text-align:center;color:var(--muted);margin:2.5rem 0;font-size:1rem;font-weight:500;background:var(--g50);padding:2rem;border-radius:var(--radius);border:1px dashed var(--wire);}
+    .empty-state i{font-size:2rem;margin-bottom:.75rem;display:block;color:var(--g300);}
+    .exit-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;background:var(--white);color:var(--red);border:1.5px solid rgba(220,38,38,.3);border-radius:var(--radius-sm);font-weight:700;cursor:pointer;transition:all .2s;font-size:.85rem;width:auto;margin:0;box-shadow:none;}
+    .exit-btn:hover{background:var(--red);color:white;transform:none;box-shadow:none;}
+    .export-btn{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 2px 10px rgba(217,119,6,.3);}
+    .export-btn:hover{box-shadow:0 5px 18px rgba(217,119,6,.4);}
+    .search-input{margin-bottom:1.25rem;font-size:.95rem;}
+    #auth-section,#dashboard,#teacher-selection,#class-selection,#data-view,#settings-section{display:none;}
+    #loading-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:9999;justify-content:center;align-items:center;backdrop-filter:blur(4px);}
+    #loading-modal .modal-content{background:var(--white);padding:2.5rem;border-radius:var(--radius-lg);text-align:center;box-shadow:var(--shadow-xl);border:1px solid var(--wire);}
+    #loading-modal .modal-content i{color:var(--g600);font-size:2.5rem;margin-bottom:1rem;}
+    #updates-modal,#analytics-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:10000;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(5px);}
+    .modal-content{background:var(--white);max-width:800px;width:100%;border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:2rem;max-height:88vh;overflow-y:auto;position:relative;}
+    .modal-close{position:absolute;top:16px;right:20px;font-size:1.8rem;cursor:pointer;color:var(--muted);transition:color .2s;line-height:1;background:none;border:none;width:auto;margin:0;padding:4px;box-shadow:none;}
+    .modal-close:hover{color:var(--red);transform:none;}
+    .update-card{background:var(--g50);border-radius:var(--radius-sm);padding:1.1rem;margin-bottom:.75rem;border-left:4px solid var(--g500);transition:all .2s;display:flex;gap:12px;align-items:flex-start;}
+    .update-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm);background:var(--white);}
+    .update-icon{font-size:1.5rem;background:var(--g100);width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .update-teacher-badge{background:var(--g800);color:white;font-size:.75rem;padding:3px 9px;border-radius:6px;font-weight:700;margin-bottom:5px;display:inline-block;}
+    .update-time{font-size:.78rem;color:var(--muted);margin-top:5px;display:block;}
+    .alert-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:1rem;font-size:.88rem;font-weight:600;}
+    .alert-bar.warning{background:#fefce8;border:1px solid #fde68a;color:#92400e;}
+    .alert-bar.danger{background:var(--soft-red);border:1px solid #fecaca;color:#991b1b;}
+    .alert-bar.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .35s var(--ease) both;}
   </style>
 </head>
 <body>
 
 <header>
-  <h1><i class="fas fa-school"></i> TeachMate 3.0 Headteacher Dashboard</h1>
-  <div style="display:flex; align-items:center; gap:20px;">
-    <button id="updates-btn" style="background:none; border:none; color:white; font-size:1.6rem; cursor:pointer; position:relative; padding:0;">
-      <i class="fas fa-bell"></i>
-      <span id="updates-badge" style="position:absolute; top:-8px; right:-8px; background:#dc3545; color:white; font-size:0.8rem; padding:3px 8px; border-radius:50%; display:none; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">0</span>
-    </button>
-    <span id="school-name-display"></span>
-    <button id="logout-btn" style="display:none; width:auto; padding:0.6rem 1.5rem; background:white; color:var(--accent); font-weight:700; border-radius:30px;">Logout</button>
+  <div class="header-logo">
+    <div class="header-logo-icon">🏫</div>
+    <h1>Teach<em>Mate</em> <span style="font-family:var(--ff-body);font-size:.75rem;color:rgba(255,255,255,.4);font-weight:600;vertical-align:middle;"> 3.0 &nbsp;·&nbsp; Headteacher Portal</span></h1>
+  </div>
+  <div class="header-right">
+    <button id="updates-btn" title="Notifications"><i class="fas fa-bell"></i><span id="updates-badge">0</span></button>
+    <span id="school-name-display-header"></span>
+    <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
   </div>
 </header>
 
 <div class="app-container">
-  <aside class="sidebar">
+  <nav class="sidebar">
+    <div class="sidebar-label">Main Menu</div>
     <ul>
-      <li><a class="nav-link" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard Overview</a></li>
-      <li><a class="nav-link" data-section="teacher-selection"><i class="fas fa-chalkboard-teacher"></i> Directory & Data</a></li>
-      <li><a class="nav-link" data-section="settings-section"><i class="fas fa-cog"></i> School Settings</a></li>
+      <li><a class="nav-link active" data-section="dashboard"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span> Dashboard</a></li>
+      <li><a class="nav-link" data-section="teacher-selection"><span class="nav-icon"><i class="fas fa-users"></i></span> Staff Directory</a></li>
+      <li><a class="nav-link" data-section="settings-section"><span class="nav-icon"><i class="fas fa-cog"></i></span> School Settings</a></li>
     </ul>
-  </aside>
+    <div class="sidebar-label">Other</div>
+    <ul>
+      <li><a class="nav-link" data-section="class-selection"><span class="nav-icon"><i class="fas fa-chalkboard"></i></span> Class Selector</a></li>
+      <li><a class="nav-link" data-section="data-view"><span class="nav-icon"><i class="fas fa-database"></i></span> Data Centre</a></li>
+    </ul>
+  </nav>
 
   <div class="content-container">
-    <div id="auth-section" class="card" style="max-width: 500px; margin: 2rem auto;">
-      <h2 style="text-align:center;"><i class="fas fa-shield-alt"></i> Portal Access</h2>
-      <input type="text" id="name" placeholder="Full Name (For Registration)">
-      <input type="text" id="ts-number" placeholder="TS Number (For Registration)">
-      <input type="email" id="email" placeholder="Official Email">
-      <input type="password" id="password" placeholder="Secure Password">
-      <select id="role"><option value="headteacher">Role: Headteacher</option></select>
-      <input type="text" id="school-name" placeholder="Exact School Name Registered">
-      <div style="display: flex; gap: 15px; margin-top: 1.5rem;">
-        <button id="login-btn" style="flex:1;"><i class="fas fa-sign-in-alt"></i> Login</button>
-        <button id="register-btn" style="flex:1; background: #0d6efd;"><i class="fas fa-user-plus"></i> Register</button>
+    <div id="auth-section" class="card fade-up" style="max-width:480px;margin:3rem auto;">
+      <h2 style="text-align:center;justify-content:center;"><i class="fas fa-shield-alt" style="color:var(--g600);"></i> 🏫 TeachMate Portal Access</h2>
+      <input type="text" id="name" placeholder="👤 Full Name (For Registration)">
+      <input type="text" id="ts-number" placeholder="🆔 TS Number (For Registration)">
+      <input type="email" id="email" placeholder="📧 Official Email">
+      <input type="password" id="password" placeholder="🔒 Secure Password">
+      <select id="role"><option value="headteacher">👑 Role: Headteacher</option></select>
+      <input type="text" id="school-name" placeholder="🏫 Exact School Name Registered">
+      <input type="text" id="school-code" placeholder="⚡ School Code (Optional e.g MUNALI-2025)" style="text-transform:uppercase;" autocomplete="off">
+      <small style="display:block;margin-top:-5px;margin-bottom:12px;color:var(--muted);font-size:12px;line-height:1.5;">🚀 Leave blank to auto-generate a unique school code for teacher admissions.</small>
+      <div style="display:flex;gap:12px;margin-top:1.25rem;">
+        <button id="login-btn" style="flex:1;margin:0;"><i class="fas fa-sign-in-alt"></i> 🔓 Login</button>
+        <button id="register-btn" style="flex:1;margin:0;background:linear-gradient(135deg,#1d4ed8,#3b82f6);"><i class="fas fa-user-plus"></i> 🚀 Register</button>
       </div>
-      <button id="forgot-password-btn" style="background: transparent; color: #6c757d; border: 1px solid #ced4da; margin-top: 15px;"><i class="fas fa-unlock-alt"></i> Reset Password</button>
-      <p id="auth-msg"></p>
+      <button id="forgot-password-btn" style="background:transparent;color:var(--muted);border:1.5px solid var(--wire);box-shadow:none;margin-top:10px;"><i class="fas fa-unlock-alt"></i> 🔑 Reset Password</button>
+      <p id="auth-msg" style="margin-top:10px;font-size:.85rem;color:var(--red);text-align:center;"></p>
     </div>
 
     <div id="dashboard" class="card">
-      <h2>Welcome to the Command Center <i class="fas fa-hand-sparkles" style="color:#f1c40f;"></i></h2>
+      <h2>Command <em>Center</em> <i class="fas fa-hand-sparkles" style="font-size:1.2rem;color:#f1c40f;"></i></h2>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <span id="school-code-display" style="margin-left:12px;font-weight:600;background:#f0fdf8;padding:4px 12px;border-radius:20px;font-size:.9rem;"></span>
+      </div>
+      <div id="subscription-panel"></div>
       <div id="summary-cards" class="summary-cards"></div>
       <div id="dashboard-charts" class="chart-container"></div>
     </div>
 
     <div id="teacher-selection" class="card">
-      <h2><i class="fas fa-users"></i> Staff Directory</h2>
-      <input type="text" id="teacher-search" class="search-input" placeholder="Search Teacher by Name or TS Number...">
+      <h2><i class="fas fa-users" style="color:var(--g600);"></i> Staff <em>Directory</em></h2>
+      <input type="text" id="teacher-search" class="search-input" placeholder="🔍 Search teacher by name or TS Number…">
       <div id="teachers-list"></div>
     </div>
 
     <div id="class-selection" class="card">
-      <h2><i class="fas fa-chalkboard"></i> Select Target Class</h2>
-      <select id="classes-select" style="font-size:1.1rem; padding:1.2rem;"></select>
-      <button id="view-class-data" style="padding:1.2rem; font-size:1.1rem; margin-top:1rem;"><i class="fas fa-search"></i> Access Class Data</button>
+      <h2><i class="fas fa-chalkboard" style="color:var(--g600);"></i> Select <em>Target Class</em></h2>
+      <div id="class-selection-info" style="display:none;margin-bottom:1rem;padding:12px 16px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;font-size:.88rem;color:#92400e;"></div>
+      <select id="classes-select" style="font-size:1rem;padding:1rem;"></select>
+      <button id="view-class-data" style="padding:1rem;font-size:1rem;margin-top:1rem;"><i class="fas fa-search"></i> Access Class Data</button>
     </div>
 
     <div id="data-view" class="card">
-      <h2 id="class-title" style="display:flex; justify-content:space-between; align-items:center;">
-        Class Data Center
-        <button class="exit-btn" onclick="showSection('class-selection')" style="margin:0; padding:8px 16px; font-size:0.9rem;"><i class="fas fa-arrow-left"></i> Change Class</button>
+      <h2 id="class-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <span>Class <em>Data Centre</em></span>
+        <button class="exit-btn" onclick="showSection('class-selection')"><i class="fas fa-arrow-left"></i> Change Class</button>
       </h2>
       <div id="alerts-section"></div>
       <div class="section-tabs">
@@ -204,1158 +237,1205 @@
       <div id="data-content"></div>
     </div>
 
-    <div id="settings-section" class="card" style="max-width: 600px;">
-      <h2><i class="fas fa-sliders-h"></i> System Settings</h2>
-      <label style="font-weight:600; color:#495057;">Official School Address</label>
+    <div id="settings-section" class="card" style="max-width:580px;">
+      <h2><i class="fas fa-sliders-h" style="color:var(--g600);"></i> School <em>Settings</em></h2>
+      <label style="font-weight:600;color:var(--slate);font-size:.85rem;">Official School Address</label>
       <input type="text" id="school-address" placeholder="e.g., Plot 123, Lusaka">
-      <label style="font-weight:600; color:#495057; margin-top:10px; display:block;">Contact Number</label>
-      <input type="text" id="school-phone" placeholder="e.g., +260...">
-      <label style="font-weight:600; color:#495057; margin-top:10px; display:block;">Official Email</label>
+      <label style="font-weight:600;color:var(--slate);font-size:.85rem;margin-top:8px;display:block;">Contact Number</label>
+      <input type="text" id="school-phone" placeholder="e.g., +260…">
+      <label style="font-weight:600;color:var(--slate);font-size:.85rem;margin-top:8px;display:block;">Official Email</label>
       <input type="email" id="school-email" placeholder="school@edu.zm">
-      <button id="save-settings-btn" style="margin-top:1.5rem; padding:1.2rem;"><i class="fas fa-save"></i> Save Configuration</button>
+      <button id="save-settings-btn" style="margin-top:1.25rem;padding:1rem;"><i class="fas fa-save"></i> Save Configuration</button>
     </div>
   </div>
 </div>
 
 <div id="updates-modal">
   <div class="modal-content">
-    <span class="modal-close" onclick="closeUpdatesModal()">×</span>
-    <h2 style="border-bottom:2px solid #f1f1f1; padding-bottom:15px; margin-bottom:20px;"><i class="fas fa-broadcast-tower"></i> Live Sync Updates <span id="updates-count" style="font-size:1.2rem; color:var(--accent); background:var(--soft-green); padding:4px 12px; border-radius:20px; vertical-align:middle;"></span></h2>
+    <button class="modal-close" onclick="closeUpdatesModal()">×</button>
+    <h2 style="font-family:var(--ff-display);font-weight:400;margin-bottom:1.25rem;display:flex;align-items:center;gap:10px;">
+      <i class="fas fa-broadcast-tower" style="color:var(--g600);"></i> Live Sync Updates
+      <span id="updates-count" style="font-size:.9rem;color:var(--g600);background:var(--g50);padding:3px 10px;border-radius:20px;font-family:var(--ff-body);"></span>
+    </h2>
     <div id="updates-list"></div>
-    <button onclick="markAllRead()" class="export-btn" style="width:100%; padding:1rem; font-size:1.1rem; border-radius:10px;"><i class="fas fa-check-double"></i> Acknowledge All Updates</button>
+    <button onclick="markAllRead()" class="export-btn" style="width:100%;padding:.9rem;font-size:.95rem;margin-top:1rem;"><i class="fas fa-check-double"></i> Acknowledge All Updates</button>
   </div>
 </div>
 
 <div id="analytics-modal">
   <div class="modal-content" style="max-width:1000px;">
-    <span class="modal-close" onclick="closeAnalyticsModal()">×</span>
-    <h2 style="text-align:center; font-size:2rem; margin-bottom:2rem;"><i class="fas fa-chart-pie"></i> Advanced Performance Analytics</h2>
-    <div style="display:flex; gap:40px; flex-wrap:wrap; justify-content:center; margin-bottom:2rem;">
-      <div style="background:#f8f9fa; padding:20px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-        <h3 style="margin-bottom:15px; text-align:center; color:#495057;">Average Score per Test</h3>
+    <button class="modal-close" onclick="closeAnalyticsModal()">×</button>
+    <h2 style="font-family:var(--ff-display);font-weight:400;font-size:1.8rem;text-align:center;margin-bottom:1.5rem;">
+      <i class="fas fa-chart-pie" style="color:var(--g600);"></i> Advanced Performance Analytics
+    </h2>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem;">
+      <div style="background:var(--g50);padding:1.25rem;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--wire);">
+        <h3 style="margin-bottom:1rem;text-align:center;color:var(--slate);font-size:.95rem;font-weight:700;">Average Score per Test</h3>
         <svg id="bar-chart" width="450" height="350"></svg>
       </div>
-      <div style="background:#f8f9fa; padding:20px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-        <h3 style="margin-bottom:15px; text-align:center; color:#495057;">Overall Grade Distribution</h3>
+      <div style="background:var(--g50);padding:1.25rem;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--wire);">
+        <h3 style="margin-bottom:1rem;text-align:center;color:var(--slate);font-size:.95rem;font-weight:700;">Grade Distribution</h3>
         <svg id="pie-chart" width="350" height="350"></svg>
       </div>
     </div>
-    <div id="top-students" style="margin-top:2rem; background:white; padding:2rem; border-radius:16px; border:1px solid #e9ecef; box-shadow:0 4px 15px rgba(0,0,0,0.03);">
-      <h3 style="border-bottom:2px solid #f1f1f1; padding-bottom:10px; margin-bottom:15px; color:var(--accent);"><i class="fas fa-award"></i> Honors Board (Top Performers)</h3>
-    </div>
+    <div id="top-students" style="background:var(--white);padding:1.5rem;border-radius:var(--radius);border:1px solid var(--wire);box-shadow:var(--shadow-sm);"></div>
   </div>
 </div>
 
 <div id="loading-modal">
-  <div class="modal-content">
-    <i class="fas fa-circle-notch fa-spin" style="font-size:3rem; color:var(--accent); margin-bottom:1rem;"></i>
-    <h2 style="color:#495057;">Processing Data...</h2>
+  <div class="modal-content" style="max-width:280px;text-align:center;">
+    <i class="fas fa-circle-notch fa-spin"></i>
+    <h2 style="font-size:1.1rem;">Processing Data…</h2>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, addDoc, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, sendPasswordResetEmail, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, collection, getDocs,
+  query, where, addDoc, onSnapshot, serverTimestamp, updateDoc
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC3Uco6S1xyoxdgjbNtpAe_ofUtG0nI0XI",
-  authDomain: "grok-7568a.firebaseapp.com",
-  projectId: "grok-7568a",
-  storageBucket: "grok-7568a.appspot.com",
-  messagingSenderId: "802272835730",
-  appId: "1:802272835730:web:f80f3c986cebbfcd51ce4b"
+  apiKey:"AIzaSyC3Uco6S1xyoxdgjbNtpAe_ofUtG0nI0XI",
+  authDomain:"grok-7568a.firebaseapp.com",
+  projectId:"grok-7568a",
+  storageBucket:"grok-7568a.appspot.com",
+  messagingSenderId:"802272835730",
+  appId:"1:802272835730:web:f80f3c986cebbfcd51ce4b"
 };
-
-const app = initializeApp(firebaseConfig);
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db   = getFirestore(app);
 
-let currentUser = null;
-let schoolId = null;
-let schoolName = '';
-let currentTeacherId = null;
-let selectedClassId = null;
-let selectedTerm = '1';
+let currentUser        = {uid:null,role:null,name:null,email:null};
+let schoolId           = null;
+let schoolName         = '';
+let schoolCode         = '';
+let currentTeacherId   = null;
+let selectedClassId    = null;
+let selectedTerm       = '1';
 let currentResultsData = [];
-let recentUpdates = [];
+let recentUpdates      = [];
+let teacherListeners   = [];
+let bulkSelection      = new Set();
+
+// ═══════════════════════════════════════
+// KEY FIX 1: classIdVariants
+// Original code used .replace() which only
+// replaces the FIRST underscore or space.
+// "8_aform_1" → "8 aform_1" (wrong).
+// This function uses regex to replace ALL
+// and returns all possible variants for the
+// Firestore 'in' query.
+// ═══════════════════════════════════════
+function classIdVariants(id) {
+  if (!id) return [];
+  const s = String(id).trim();
+  const withSpaces      = s.replace(/_/g,' ');
+  const withUnderscores = s.replace(/ /g,'_');
+  return [...new Set([s, withSpaces, withUnderscores])];
+}
 
 function parseFirestoreDate(ts) {
   if (!ts) return new Date();
   if (typeof ts.toDate === 'function') return ts.toDate();
   return new Date(ts);
 }
-
-function showLoading() { document.getElementById('loading-modal').style.display = 'flex'; }
-function hideLoading() { document.getElementById('loading-modal').style.display = 'none'; }
-
-function showSection(id, state = {}) {
-  ['auth-section', 'dashboard', 'teacher-selection', 'class-selection', 'data-view', 'settings-section'].forEach(s => {
-    document.getElementById(s).style.display = s === id ? 'block' : 'none';
-  });
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.classList.toggle('active', link.dataset.section === id);
-  });
-  history.pushState({ page: id, ...state }, '', `#${id}`);
-  if (id === 'dashboard') loadDashboardCharts();
-  if (id === 'settings-section') loadSchoolSettings();
+function showLoading(){ document.getElementById('loading-modal').style.display='flex'; }
+function hideLoading(){ document.getElementById('loading-modal').style.display='none'; }
+function fmtDate(val){
+  if (!val) return '—';
+  const d = new Date(val);
+  if (isNaN(d)) return val;
+  return d.toLocaleDateString('en-ZM',{day:'numeric',month:'short',year:'numeric'});
+}
+function fmtDateTime(val){
+  if (!val) return '—';
+  const d = new Date(val);
+  if (isNaN(d)) return val;
+  return d.toLocaleString('en-ZM',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
-window.onpopstate = function(event) {
-  if (event.state) {
-    const { page, teacherId, classId } = event.state;
-    if (page === 'teacher-selection') showSection('teacher-selection');
-    else if (page === 'class-selection') { currentTeacherId = teacherId; loadClasses(); showSection('class-selection'); }
-    else if (page === 'data-view') { currentTeacherId = teacherId; selectedClassId = classId; showSection('data-view'); window.loadSectionData('students'); }
-    else if (page === 'settings-section') showSection('settings-section');
-    else if (page === 'dashboard') showSection('dashboard');
+// ─── SECTION SWITCHER ───────────────────
+function showSection(id, state={}) {
+  ['auth-section','dashboard','teacher-selection','class-selection','data-view','settings-section']
+    .forEach(s => { const el=document.getElementById(s); if(el) el.style.display = s===id?'block':'none'; });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.section===id));
+  history.pushState({page:id,...state},'',`#${id}`);
+  if (id==='dashboard')        loadDashboardCharts();
+  if (id==='settings-section') loadSchoolSettings();
+}
+window.showSection = showSection;
+
+window.onpopstate = function(e) {
+  if (e.state) {
+    const {page,teacherId,classId} = e.state;
+    if      (page==='teacher-selection') showSection('teacher-selection');
+    else if (page==='class-selection')   { currentTeacherId=teacherId; loadClasses(); showSection('class-selection'); }
+    else if (page==='data-view')         { currentTeacherId=teacherId; selectedClassId=classId; showSection('data-view'); window.loadSectionData('students'); }
+    else if (page==='settings-section')  showSection('settings-section');
+    else if (page==='dashboard')         showSection('dashboard');
     else showSection('auth-section');
   } else showSection('auth-section');
 };
 
 document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', (e) => {
+  link.addEventListener('click', e => {
     e.preventDefault();
     const section = e.currentTarget.dataset.section;
-    if (section === 'teacher-selection') loadTeachers();
+    if (section==='teacher-selection') loadTeachers();
     showSection(section);
   });
 });
 
+// ─── FORGOT PASSWORD ─────────────────────
 document.getElementById('forgot-password-btn').addEventListener('click', async () => {
   const email = document.getElementById('email').value.trim();
-  if (!email) { alert('Please enter your email address in the Email field to reset your password.'); return; }
+  if (!email) { alert('Enter your email first.'); return; }
   showLoading();
-  try {
-    await sendPasswordResetEmail(auth, email);
-    alert('A password reset link has been sent to your email. Please check your inbox or spam folder.');
-  } catch (error) { alert(`Error: ${error.message}`); } finally { hideLoading(); }
+  try { await sendPasswordResetEmail(auth, email); alert('Reset link sent. Check your inbox.'); }
+  catch(e) { alert(`Error: ${e.message}`); } finally { hideLoading(); }
 });
 
+// ─── REGISTER ───────────────────────────
 document.getElementById('register-btn').addEventListener('click', async () => {
   showLoading();
-  const name = document.getElementById('name').value.trim();
-  const tsNumber = document.getElementById('ts-number').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+  const name            = document.getElementById('name').value.trim();
+  const tsNumber        = document.getElementById('ts-number').value.trim();
+  const email           = document.getElementById('email').value.trim();
+  const password        = document.getElementById('password').value;
   const schoolNameInput = document.getElementById('school-name').value.trim();
-  if (!name || !tsNumber || !email || !password || !schoolNameInput) { alert('Fill all fields'); hideLoading(); return; }
+  let   schoolCodeInput = document.getElementById('school-code').value.trim().toUpperCase();
+  if (!name||!tsNumber||!email||!password||!schoolNameInput) {
+    alert('Please fill all required fields.'); hideLoading(); return;
+  }
+  let firebaseAuthUser = null;
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    currentUser = userCredential.user;
-    const schoolsQuery = query(collection(db, 'schools'), where('name', '==', schoolNameInput));
-    const schoolsSnap = await getDocs(schoolsQuery);
-    if (schoolsSnap.empty) {
-      const schoolRef = await addDoc(collection(db, 'schools'), { name: schoolNameInput });
-      schoolId = schoolRef.id;
-    } else schoolId = schoolsSnap.docs[0].id;
-    await setDoc(doc(db, 'users', currentUser.uid), { schoolId, role: 'headteacher' });
-    await setDoc(doc(db, 'schools', schoolId, 'headteachers', currentUser.uid), { name, tsNumber, email, createdAt: new Date().toISOString() });
-    await setDoc(doc(db, 'schools', schoolId), { name: schoolNameInput, address: '', phone: '', email: '' }, { merge: true });
-    schoolName = schoolNameInput;
+    const uc = await createUserWithEmailAndPassword(auth, email, password);
+    firebaseAuthUser = uc.user;
+    const uid = firebaseAuthUser.uid;
+    if (!schoolCodeInput) {
+      schoolCodeInput = await generateUniqueSchoolCode();
+    } else {
+      const ex = await getDocs(query(collection(db,'schools'),where('schoolCode','==',schoolCodeInput)));
+      if (!ex.empty) { await firebaseAuthUser.delete(); alert(`Code "${schoolCodeInput}" already taken.`); hideLoading(); return; }
+    }
+    await setDoc(doc(db,'users',uid),{schoolId:'pending',role:'headteacher',accountStatus:'active',approved:true,email});
+    const sq = query(collection(db,'schools'),where('name','==',schoolNameInput));
+    const ss = await getDocs(sq);
+    if (ss.empty) {
+      const sr = await addDoc(collection(db,'schools'),{name:schoolNameInput,schoolCode:schoolCodeInput,status:'expired',expiryDate:null,address:'',phone:'',email:'',lastUpdated:serverTimestamp(),createdAt:serverTimestamp()});
+      schoolId = sr.id;
+    } else {
+      schoolId = ss.docs[0].id;
+      await updateDoc(doc(db,'schools',schoolId),{schoolCode:schoolCodeInput});
+    }
+    await updateDoc(doc(db,'users',uid),{schoolId});
+    await setDoc(doc(db,'schools',schoolId,'headteachers',uid),{name,tsNumber,email,createdAt:serverTimestamp()});
+    currentUser = {uid,role:'headteacher',name,email};
+    schoolName  = schoolNameInput;
+    schoolCode  = schoolCodeInput;
     showDashboard();
-  } catch (error) { alert(`Error: ${error.message}`); } finally { hideLoading(); }
+  } catch(e) {
+    if (firebaseAuthUser) { try { await firebaseAuthUser.delete(); } catch(_){} }
+    alert(`Registration error: ${e.message}`);
+  } finally { hideLoading(); }
 });
 
+// ─── LOGIN ───────────────────────────────
 document.getElementById('login-btn').addEventListener('click', async () => {
   showLoading();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+  const email           = document.getElementById('email').value.trim();
+  const password        = document.getElementById('password').value;
   const schoolNameInput = document.getElementById('school-name').value.trim();
-  if (!email || !password || !schoolNameInput) { alert('Please fill Email, Password, AND Exact School Name'); hideLoading(); return; }
+  if (!email||!password||!schoolNameInput) { alert('Fill Email, Password AND School Name.'); hideLoading(); return; }
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    currentUser = userCredential.user;
-    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      schoolId = userData.schoolId;
-      if (userData.role !== 'headteacher') { alert('Access denied: Your account is not registered as a Headteacher.'); await signOut(auth); hideLoading(); return; }
-      const headDoc = await getDoc(doc(db, 'schools', schoolId, 'headteachers', currentUser.uid));
-      if (headDoc.exists()) {
-        const schoolDoc = await getDoc(doc(db, 'schools', schoolId));
-        const databaseSchoolName = schoolDoc.data().name || "";
-        if (databaseSchoolName.toLowerCase() !== schoolNameInput.toLowerCase()) {
-          alert(`Access Denied: The school name "${schoolNameInput}" does not exactly match our records.`);
-          await signOut(auth); hideLoading(); return;
-        }
-        schoolName = databaseSchoolName;
-        showDashboard();
-      } else { alert('Access denied: Headteacher profile missing in the school directory.'); await signOut(auth); }
-    } else { alert('User profile not found. Please register.'); await signOut(auth); }
-  } catch (error) { alert(`Error logging in: ${error.message}`); } finally { hideLoading(); }
+    const uc = await signInWithEmailAndPassword(auth, email, password);
+    const uid = uc.user.uid;
+    const userDoc = await getDoc(doc(db,'users',uid));
+    if (!userDoc.exists()) { alert('Profile not found. Please register.'); await signOut(auth); hideLoading(); return; }
+    const userData = userDoc.data();
+    if (userData.role!=='headteacher') { alert('Access denied: Not a Headteacher account.'); await signOut(auth); hideLoading(); return; }
+    schoolId = userData.schoolId;
+    const headDoc = await getDoc(doc(db,'schools',schoolId,'headteachers',uid));
+    if (!headDoc.exists()) { alert('Headteacher profile missing.'); await signOut(auth); hideLoading(); return; }
+    const headData  = headDoc.data();
+    const schoolDoc = await getDoc(doc(db,'schools',schoolId));
+    if (!schoolDoc.exists()) { alert('School record not found.'); await signOut(auth); hideLoading(); return; }
+    const dbSchoolData = schoolDoc.data();
+    if ((dbSchoolData.name||'').toLowerCase() !== schoolNameInput.toLowerCase()) {
+      alert(`Access Denied: School name does not match.`); await signOut(auth); hideLoading(); return;
+    }
+    currentUser = {uid, role:userData.role, name:headData.name||email, email:userData.email||email};
+    schoolName  = dbSchoolData.name||'';
+    schoolCode  = dbSchoolData.schoolCode||'';
+    showDashboard();
+  } catch(e) { console.error(e); alert(`Login error: ${e.message}`); } finally { hideLoading(); }
 });
 
+// ─── LOGOUT ──────────────────────────────
 document.getElementById('logout-btn').addEventListener('click', async () => {
+  detachTeacherListeners();
   await signOut(auth);
-  currentUser = null; schoolId = null; schoolName = '';
-  document.getElementById('logout-btn').style.display = 'none';
-  document.getElementById('school-name-display').textContent = '';
-  document.querySelector('.sidebar').style.display = 'none';
+  currentUser={uid:null,role:null,name:null,email:null};
+  schoolId=null; schoolName=''; schoolCode='';
+  currentTeacherId=null; selectedClassId=null;
+  currentResultsData=[]; recentUpdates=[];
+  document.getElementById('logout-btn').style.display='none';
+  document.getElementById('school-name-display-header').textContent='';
+  document.getElementById('school-code-display').textContent='';
+  document.querySelector('.sidebar').style.display='none';
   showSection('auth-section');
 });
 
+async function generateUniqueSchoolCode() {
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code; let exists=true;
+  while(exists){
+    code='HT-'+Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+    const snap=await getDocs(query(collection(db,'schools'),where('schoolCode','==',code)));
+    exists=!snap.empty;
+  }
+  return code;
+}
+
+function displaySchoolInfoOnDashboard() {
+  const nd = document.getElementById('school-name-display-header');
+  if (nd) nd.textContent = schoolName||'';
+  const cd = document.getElementById('school-code-display');
+  if (cd) cd.innerHTML = `Code: <strong>${schoolCode||'—'}</strong>
+    <button onclick="window.copySchoolCode()" style="margin-left:8px;background:transparent;border:none;color:#00cc88;cursor:pointer;font-weight:700;" title="Copy">📋</button>`;
+}
+window.copySchoolCode = function(){
+  if (!schoolCode) return;
+  navigator.clipboard.writeText(schoolCode)
+    .then(()=>alert('School code copied!'))
+    .catch(()=>prompt('Copy manually:',schoolCode));
+};
+
 async function showDashboard() {
-  document.getElementById('logout-btn').style.display = 'block';
-  document.getElementById('school-name-display').textContent = schoolName;
-  document.querySelector('.sidebar').style.display = 'block';
+  document.getElementById('logout-btn').style.display='block';
+  document.querySelector('.sidebar').style.display='block';
   showSection('dashboard');
+  displaySchoolInfoOnDashboard();
+  await renderSubscriptionPanel();
   await loadSummaryCards();
   await loadDashboardCharts();
   await checkForUpdates();
 }
 
-function createTable(headers) {
-  const container = document.createElement('div');
-  container.className = 'enhanced-table-container';
-  const table = document.createElement('table');
-  table.classList.add('enhanced-table');
-  const thead = document.createElement('thead');
-  const tr = document.createElement('tr');
-  headers.forEach(h => {
-    const th = document.createElement('th');
-    th.innerHTML = `${h} <i class="fas fa-sort" style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-left:5px;"></i>`;
-    tr.appendChild(th);
-  });
-  thead.appendChild(tr);
-  table.appendChild(thead);
-  table.appendChild(document.createElement('tbody'));
-  container.appendChild(table);
-  return container;
+// ─── SUBSCRIPTION PANEL ──────────────────
+async function renderSubscriptionPanel() {
+  const panelEl = document.getElementById('subscription-panel');
+  if (!panelEl||!schoolId) return;
+  try {
+    const schoolDoc = await getDoc(doc(db,'schools',schoolId));
+    const data      = schoolDoc.exists()?schoolDoc.data():{};
+    const rawStatus = data.status||'expired';
+    const expiryTs  = data.expiryDate?new Date(data.expiryDate):null;
+    const now       = new Date();
+    let status=rawStatus;
+    if (status==='active'&&expiryTs){
+      const dl=Math.ceil((expiryTs-now)/(1000*60*60*24));
+      if(dl<=0) status='expired'; else if(dl<=3) status='expiring';
+    }
+    const daysLeft=expiryTs?Math.max(0,Math.ceil((expiryTs-now)/(1000*60*60*24))):null;
+    const SC={
+      active:  {cls:'status-active',  badge:'badge-active',   icon:'✅',bt:'● Active'},
+      expiring:{cls:'status-expiring', badge:'badge-expiring', icon:'⚠️',bt:'⚠ Expiring Soon'},
+      pending: {cls:'status-pending',  badge:'badge-pending',  icon:'🕐',bt:'● Awaiting Approval'},
+      expired: {cls:'status-expired',  badge:'badge-expired',  icon:'🔴',bt:'● Expired'},
+    };
+    const cfg=SC[status]||SC.expired;
+    panelEl.innerHTML=`
+      <div class="subscription-panel ${cfg.cls}">
+        <div class="sub-left">
+          <div class="sub-icon">${cfg.icon}</div>
+          <div class="sub-info">
+            <div class="sub-label">Subscription Status</div>
+            <div class="sub-school-name">${schoolName||'—'}</div>
+            <span class="sub-status-badge ${cfg.badge}">${cfg.bt}</span>
+            <div class="sub-meta">
+              ${expiryTs?`<div class="sub-meta-item"><i class="fas fa-calendar-alt"></i> Expiry: <strong>${expiryTs.toLocaleDateString('en-ZM',{day:'numeric',month:'long',year:'numeric'})}</strong></div>`:''}
+              ${daysLeft!==null&&status!=='expired'?`<div class="sub-meta-item"><i class="fas fa-hourglass-half"></i> <strong>${daysLeft}</strong> day${daysLeft!==1?'s':''} remaining</div>`:''}
+              ${status==='expired'?`<div class="sub-meta-item" style="color:#fca5a5;"><i class="fas fa-lock"></i> <strong>Access suspended — renew to continue</strong></div>`:''}
+              ${status==='pending'?`<div class="sub-meta-item" style="color:#fde68a;"><i class="fas fa-spinner fa-spin"></i> <strong>Payment submitted — awaiting approval</strong></div>`:''}
+            </div>
+          </div>
+        </div>
+        <div class="sub-right">
+          ${status==='expired'?`<div style="display:flex;gap:8px;align-items:center;"><input id="txid-input" placeholder="Ref. No. (optional)" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:8px 12px;font-size:.85rem;width:160px;margin:0;"><button id="pay-btn" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#052e16;border:none;border-radius:10px;padding:10px 22px;font-size:.9rem;font-weight:800;cursor:pointer;width:auto;margin:0;box-shadow:0 4px 14px rgba(245,158,11,.35);"><i class="fas fa-credit-card"></i> I Have Paid</button></div>`:''}
+          ${status==='expiring'?`<button id="pay-btn" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#052e16;width:auto;margin:0;padding:10px 20px;border-radius:10px;font-size:.9rem;font-weight:800;box-shadow:0 4px 14px rgba(245,158,11,.35);"><i class="fas fa-credit-card"></i> Renew Subscription</button>`:''}
+          ${status==='pending'?`<button disabled style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);width:auto;margin:0;padding:10px 20px;border-radius:10px;font-size:.9rem;cursor:not-allowed;"><i class="fas fa-clock"></i> Pending Approval…</button>`:''}
+        </div>
+      </div>`;
+    const payBtn=document.getElementById('pay-btn');
+    if (payBtn&&(status==='expired'||status==='expiring')) {
+      payBtn.addEventListener('click', async()=>{
+        const txId=document.getElementById('txid-input')?.value.trim()||'';
+        payBtn.disabled=true; payBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting…';
+        try {
+          await updateDoc(doc(db,'schools',schoolId),{status:'pending',paymentRequestedAt:Date.now(),lastUpdated:Date.now(),...(txId?{txId}:{})});
+          await renderSubscriptionPanel();
+        } catch(err) {
+          payBtn.disabled=false; payBtn.innerHTML='<i class="fas fa-credit-card"></i> I Have Paid';
+          alert(`Error: ${err.message}`);
+        }
+      });
+    }
+  } catch(err) {
+    panelEl.innerHTML=`<div class="alert-bar warning"><i class="fas fa-exclamation-circle"></i> Could not load subscription status.</div>`;
+    console.error('Subscription panel error:',err);
+  }
 }
 
+// ─── TABLE HELPERS ───────────────────────
+function createTable(headers) {
+  const container=document.createElement('div');
+  container.className='enhanced-table-container';
+  const table=document.createElement('table');
+  table.classList.add('enhanced-table');
+  const thead=document.createElement('thead');
+  const tr=document.createElement('tr');
+  headers.forEach(h=>{ const th=document.createElement('th'); th.innerHTML=`${h} <span class="sort-icon"><i class="fas fa-sort"></i></span>`; tr.appendChild(th); });
+  thead.appendChild(tr); table.appendChild(thead); table.appendChild(document.createElement('tbody'));
+  container.appendChild(table); return container;
+}
 function addRow(tableContainer, cells) {
-  const table = tableContainer.querySelector('table');
-  const tbody = table.querySelector('tbody');
-  const tr = document.createElement('tr');
-  cells.forEach(c => {
-    const td = document.createElement('td');
-    // Simple HTML parsing to allow classes like highlight-red
-    if(typeof c === 'string' && c.includes('<')) {
-        td.innerHTML = c;
-    } else {
-        td.textContent = c;
-    }
+  const tbody=tableContainer.querySelector('tbody');
+  const tr=document.createElement('tr');
+  cells.forEach((c,i)=>{
+    const td=document.createElement('td');
+    if (typeof c==='string'&&c.includes('<')) td.innerHTML=c;
+    else { if(i===0&&c&&c!=='—') td.innerHTML=`<span class="date-chip"><i class="fas fa-calendar-day" style="font-size:.7rem;"></i> ${c}</span>`; else td.textContent=c; }
     tr.appendChild(td);
   });
   tbody.appendChild(tr);
 }
-
 function makeSortable(tableContainer) {
-  const table = tableContainer.querySelector('table');
-  const headers = table.querySelectorAll('thead th');
-  headers.forEach((th, colIndex) => {
-    th.addEventListener('click', () => {
-      const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.rows);
-      const numeric = !isNaN(parseFloat(rows[0]?.cells[colIndex]?.textContent?.trim() || ''));
-      rows.sort((a, b) => {
-        let valA = a.cells[colIndex].textContent.trim();
-        let valB = b.cells[colIndex].textContent.trim();
-        if (numeric) return parseFloat(valA) - parseFloat(valB);
-        return valA.localeCompare(valB);
+  const table=tableContainer.querySelector('table');
+  const headers=table.querySelectorAll('thead th');
+  headers.forEach((th,colIndex)=>{
+    th.style.cursor='pointer';
+    th.addEventListener('click',()=>{
+      const tbody=table.querySelector('tbody');
+      const rows=Array.from(tbody.rows);
+      const isDate=rows[0]?.cells[colIndex]?.textContent?.match(/\d{1,2}\s+\w+\s+\d{4}/);
+      const numeric=!isNaN(parseFloat(rows[0]?.cells[colIndex]?.textContent?.replace(/[^0-9.]/g,'')||''));
+      rows.sort((a,b)=>{
+        let vA=a.cells[colIndex].textContent.trim(), vB=b.cells[colIndex].textContent.trim();
+        if(isDate)  return new Date(vA)-new Date(vB);
+        if(numeric) return parseFloat(vA.replace(/[^0-9.]/g,''))-parseFloat(vB.replace(/[^0-9.]/g,''));
+        return vA.localeCompare(vB);
       });
-      // Toggle sort direction
-      let isAscending = th.dataset.sort === 'asc';
-      if (isAscending) rows.reverse();
-      th.dataset.sort = isAscending ? 'desc' : 'asc';
-      rows.forEach(r => tbody.appendChild(r));
+      const isAsc=th.dataset.sort==='asc'; if(isAsc) rows.reverse();
+      headers.forEach(h=>{h.querySelector('.sort-icon').innerHTML='<i class="fas fa-sort"></i>';delete h.dataset.sort;});
+      th.dataset.sort=isAsc?'desc':'asc';
+      th.querySelector('.sort-icon').innerHTML=`<i class="fas fa-sort-${isAsc?'down':'up'}"></i>`;
+      rows.forEach(r=>tbody.appendChild(r));
     });
   });
 }
 
-async function checkForUpdates() {
-  recentUpdates = [];
-  try {
-    const headRef = doc(db, 'schools', schoolId, 'headteachers', currentUser.uid);
-    const headSnap = await getDoc(headRef);
-    let lastViewed = headSnap.exists() && headSnap.data().lastViewedUpdates ? new Date(headSnap.data().lastViewedUpdates) : new Date(0);
-    let lastKnownCounts = headSnap.exists() && headSnap.data().lastKnownStudentCounts ? headSnap.data().lastKnownStudentCounts : {};
-
-    const teachersSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers'));
-    for (const teacherDoc of teachersSnap.docs) {
-      const teacherData = teacherDoc.data();
-      const teacherName = teacherData.name || 'Unknown Teacher';
-      const teacherId = teacherDoc.id;
-
-      const classesSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherId, 'classes'));
-      for (const classDoc of classesSnap.docs) {
-        const classId = classDoc.id;
-        const className = classDoc.data().displayName || classId;
-        const classStudentsQ = query(collection(db, 'schools', schoolId, 'teachers', teacherId, 'students'), where('classId', '==', classId));
-        const studentsSnap = await getDocs(classStudentsQ);
-        const currentCount = studentsSnap.size;
-        const key = `${teacherId}_${classId}`;
-        const previousCount = lastKnownCounts[key] || 0;
-        if (currentCount > previousCount) {
-          recentUpdates.push({
-            type: 'students',
-            icon: '👨‍🎓',
-            teacher: teacherName,
-            message: `Added ${currentCount - previousCount} new student(s) in <strong>${className}</strong>. New total: <strong>${currentCount}</strong>`,
-            timestamp: new Date().getTime(),
-            time: new Date().toLocaleString(),
-            classId: classId
-          });
-          lastKnownCounts[key] = currentCount;
-        }
-      }
-
-      const historyTypes = [
-        { coll: 'attendanceHistory', name: 'attendance records' },
-        { coll: 'fees', name: 'fees payments' }, 
-        { coll: 'results', name: 'test results' }
-      ];
-
-      for (const ht of historyTypes) {
-        const histSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherId, ht.coll));
-        let newCount = 0;
-        let latestTime = null;
-        histSnap.forEach(doc => {
-          const d = doc.data();
-          if (d.syncedAt) {
-            const syncTime = parseFirestoreDate(d.syncedAt);
-            if (syncTime > lastViewed) {
-              newCount++;
-              if (!latestTime || syncTime > latestTime) latestTime = syncTime;
-            }
-          }
-        });
-        if (newCount > 0) {
-          recentUpdates.push({
-            type: ht.coll,
-            icon: ht.coll === 'attendanceHistory' ? '📅' : ht.coll === 'fees' ? '💰' : '📊',
-            teacher: teacherName,
-            message: `Synced ${newCount} new ${ht.name} to the cloud.`,
-            timestamp: latestTime ? latestTime.getTime() : new Date().getTime(),
-            time: latestTime ? latestTime.toLocaleString() : new Date().toLocaleString()
-          });
-        }
-      }
-    }
-
-    recentUpdates.sort((a, b) => b.timestamp - a.timestamp);
-    await updateDoc(headRef, { lastKnownStudentCounts: lastKnownCounts }, { merge: true });
-
-    document.getElementById('updates-badge').textContent = recentUpdates.length;
-    document.getElementById('updates-badge').style.display = recentUpdates.length > 0 ? 'inline' : 'none';
-
-    if (recentUpdates.length > 0) showUpdatesModal();
-  } catch (e) { console.error('Updates check:', e); } 
-}
-
-function showUpdatesModal() {
-  const modal = document.getElementById('updates-modal');
-  const list = document.getElementById('updates-list');
-  list.innerHTML = '';
-  document.getElementById('updates-count').textContent = `(${recentUpdates.length})`;
-  recentUpdates.forEach((up) => {
-    const card = document.createElement('div');
-    card.className = 'update-card';
-    card.innerHTML = `
-      <i>${up.icon}</i>
-      <div style="flex:1;">
-        <span class="update-teacher-badge"><i class="fas fa-chalkboard-teacher"></i> ${up.teacher}</span>
-        <p style="font-size:1.05rem; color:#343a40;">${up.message}</p>
-        <span class="update-time"><i class="far fa-clock"></i> ${up.time}</span>
-      </div>
-    `;
-    list.appendChild(card);
-  });
-  modal.style.display = 'flex';
-}
-
-window.closeUpdatesModal = function() {
-  document.getElementById('updates-modal').style.display = 'none';
-};
-
-window.markAllRead = async function() {
+// ─── TEACHERS ────────────────────────────
+function loadTeachers() {
   showLoading();
-  try {
-    const headRef = doc(db, 'schools', schoolId, 'headteachers', currentUser.uid);
-    await updateDoc(headRef, { lastViewedUpdates: new Date().toISOString() }, { merge: true });
-    recentUpdates = [];
-    document.getElementById('updates-badge').style.display = 'none';
-    closeUpdatesModal();
-  } catch (err) { console.error(err); alert('Could not update status.'); } finally { hideLoading(); }
-};
+  window._staffDirInitialLoadDone=false;
+  detachTeacherListeners();
+  let latestTeacherSnap=null, latestAdmissionSnap=null;
+  const u1=onSnapshot(collection(db,'schools',schoolId,'teachers'),snap=>{
+    latestTeacherSnap=snap; if(latestAdmissionSnap) renderTeacherList(latestTeacherSnap,latestAdmissionSnap);
+  },err=>console.error('Teachers listener:',err));
+  const u2=onSnapshot(collection(db,'schools',schoolId,'admissionRequests'),snap=>{
+    latestAdmissionSnap=snap; if(latestTeacherSnap) renderTeacherList(latestTeacherSnap,latestAdmissionSnap);
+  },err=>console.error('Admission listener:',err));
+  teacherListeners.push(u1,u2);
+}
+function detachTeacherListeners(){ teacherListeners.forEach(u=>{try{u();}catch(_){}}); teacherListeners=[]; }
 
-document.getElementById('updates-btn').addEventListener('click', () => {
-  if (recentUpdates.length > 0) showUpdatesModal();
-});
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    const updatesModal = document.getElementById('updates-modal');
-    const analyticsModal = document.getElementById('analytics-modal');
-    if (updatesModal.style.display === 'flex') window.closeUpdatesModal();
-    else if (analyticsModal.style.display === 'flex') window.closeAnalyticsModal();
+async function renderTeacherList(teachersSnap, admissionSnap) {
+  const list=document.getElementById('teachers-list');
+  if(!list) return;
+  if(!teachersSnap)  teachersSnap  = await getDocs(collection(db,'schools',schoolId,'teachers'));
+  if(!admissionSnap) admissionSnap = await getDocs(collection(db,'schools',schoolId,'admissionRequests'));
+  const teachers=[]; const pending=[];
+  teachersSnap.forEach(d=>teachers.push({id:d.id,...d.data(),type:'active'}));
+  admissionSnap.forEach(d=>{ const data=d.data(); if(data.requestStatus==='pending') pending.push({id:d.id,...data,type:'pending'}); });
+  list.innerHTML='';
+  if(!teachers.length&&!pending.length){
+    list.innerHTML='<p class="empty-state"><i class="fas fa-users"></i> No teachers or admission requests found.</p>';
+    if(!window._staffDirInitialLoadDone){hideLoading();window._staffDirInitialLoadDone=true;}
+    return;
   }
-});
-
-async function loadTeachers() {
-  showLoading();
-  try {
-    const teachersRef = collection(db, 'schools', schoolId, 'teachers');
-    const teachersSnap = await getDocs(teachersRef);
-    const list = document.getElementById('teachers-list');
-    list.innerHTML = '';
-    if (teachersSnap.empty) {
-      list.innerHTML = '<p class="empty-state">No teachers registered under this school yet.</p>';
-    } else {
-      teachersSnap.forEach(doc => {
-        const d = doc.data();
-        const item = document.createElement('div');
-        item.classList.add('teacher-item');
-        item.dataset.name = d.name.toLowerCase();
-        item.dataset.ts = d.tsNumber.toLowerCase();
-        item.innerHTML = `<span>🧑‍🏫</span> <div style="flex:1;"><p style="font-size:1.2rem;"><strong>${d.name}</strong></p><p style="color:#6c757d; margin-bottom:10px;">TS No: ${d.tsNumber}</p><button class="view-teacher-data" data-teacher-id="${doc.id}" style="width:auto; padding:10px 24px; border-radius:30px;"><i class="fas fa-folder-open"></i> Access Records</button></div>`;
-        list.appendChild(item);
-      });
-      document.querySelectorAll('.view-teacher-data').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          currentTeacherId = e.currentTarget.dataset.teacherId;
-          await loadClasses();
-          showSection('class-selection', { teacherId: currentTeacherId });
-        });
-      });
-    }
-    document.getElementById('teacher-search').addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      document.querySelectorAll('.teacher-item').forEach(item => {
-        item.style.display = (item.dataset.name.includes(query) || item.dataset.ts.includes(query)) ? 'flex' : 'none';
-      });
+  const canManage=canManageAdmissions();
+  if(pending.length>0&&canManage){
+    const bb=document.createElement('div');
+    bb.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;';
+    bb.innerHTML=`<span style="font-weight:600;">${pending.length} pending</span>
+      <button class="bulk-approve" style="background:#00cc88;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">✅ Approve Selected</button>
+      <button class="bulk-reject" style="background:#e11d48;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">❌ Reject Selected</button>
+      <span class="select-all" style="cursor:pointer;color:#00cc88;font-weight:600;">Select All</span>`;
+    list.appendChild(bb);
+    bb.querySelector('.bulk-approve').addEventListener('click',()=>bulkAdmissionAction('approve'));
+    bb.querySelector('.bulk-reject').addEventListener('click',()=>bulkAdmissionAction('reject'));
+    bb.querySelector('.select-all').addEventListener('click',selectAllPending);
+  }
+  [...teachers,...pending].forEach(entry=>{
+    const item=document.createElement('div');
+    item.classList.add('teacher-item');
+    item.dataset.name=(entry.name||'').toLowerCase();
+    item.dataset.ts=(entry.tsNumber||'').toLowerCase();
+    item.dataset.uid=entry.id;
+    // KEY FIX 2: Read assignedClasses OR classes array from teacher doc
+    const assignedClasses=entry.assignedClasses||entry.classes||[];
+    const classCount=Array.isArray(assignedClasses)?assignedClasses.length:0;
+    const badge=entry.type==='active'
+      ?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:8px;font-size:.78rem;font-weight:700;">✅ Active</span>'
+      :'<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-size:.78rem;font-weight:700;">⏳ Pending</span>';
+    let actionHtml;
+    if(entry.type==='active'){
+      actionHtml=`<button class="view-teacher-data" data-teacher-id="${entry.id}" style="width:auto;padding:8px 20px;border-radius:20px;font-size:.85rem;margin:0;"><i class="fas fa-folder-open"></i> Access Records</button>`;
+    } else if(canManage){
+      actionHtml=`<label style="display:inline-flex;align-items:center;gap:6px;margin-right:8px;"><input type="checkbox" class="pending-checkbox" value="${entry.id}" style="transform:scale(1.2);"></label>
+        <button class="approve-request" data-uid="${entry.id}" style="width:auto;padding:8px 18px;border-radius:20px;font-size:.85rem;margin-right:6px;background:#00cc88;color:white;border:none;">✅ Approve</button>
+        <button class="reject-request" data-uid="${entry.id}" style="width:auto;padding:8px 18px;border-radius:20px;font-size:.85rem;background:#e11d48;color:white;border:none;">❌ Reject</button>`;
+    } else { actionHtml='<span style="color:#94a3b8;">Pending approval</span>'; }
+    item.innerHTML=`
+      <div class="teacher-avatar">${entry.type==='pending'?'🕐':'🧑‍🏫'}</div>
+      <div style="flex:1;">
+        <p style="font-size:1.05rem;font-weight:700;margin-bottom:3px;">${entry.name||'Unknown'} ${badge}</p>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:.5rem;">TS No: ${entry.tsNumber||'—'} &nbsp;·&nbsp; ${classCount} class${classCount!==1?'es':''} assigned</p>
+        <div style="font-size:.8rem;color:#475569;">${entry.role?`<span>📌 ${entry.role}</span>`:''} ${entry.position?`<span> • ${entry.position}</span>`:''} ${entry.subjects?.length?`<br>📚 ${entry.subjects.join(', ')}`:''}</div>
+        <div style="margin-top:6px;">${actionHtml}</div>
+      </div>`;
+    list.appendChild(item);
+  });
+  document.querySelectorAll('.view-teacher-data').forEach(btn=>{
+    btn.addEventListener('click', async e=>{
+      currentTeacherId=e.currentTarget.dataset.teacherId;
+      await loadClasses();
+      showSection('class-selection',{teacherId:currentTeacherId});
     });
-  } catch (error) { alert(`Error loading teachers: ${error.message}`); } finally { hideLoading(); }
+  });
+  document.querySelectorAll('.approve-request').forEach(btn=>btn.addEventListener('click',e=>handleAdmissionAction(e.currentTarget.dataset.uid,'approve')));
+  document.querySelectorAll('.reject-request').forEach(btn=>btn.addEventListener('click',e=>handleAdmissionAction(e.currentTarget.dataset.uid,'reject')));
+  const si=document.getElementById('teacher-search');
+  if(si){ si.removeEventListener('input',filterTeacherList); si.addEventListener('input',filterTeacherList); }
+  bulkSelection.clear();
+  if(!window._staffDirInitialLoadDone){hideLoading();window._staffDirInitialLoadDone=true;}
 }
+function filterTeacherList(e){
+  const q=e.target.value.toLowerCase();
+  document.querySelectorAll('.teacher-item').forEach(item=>{
+    item.style.display=(item.dataset.name.includes(q)||item.dataset.ts.includes(q))?'flex':'none';
+  });
+}
+function canManageAdmissions(){ return currentUser&&['head_of_department','deputy_headteacher','headteacher'].includes(currentUser.role); }
 
+async function handleAdmissionAction(uid,action){
+  if(!confirm(`Are you sure you want to ${action} this request?`)) return;
+  showLoading();
+  try { await _processAdmissionAction(uid,action); alert(action==='approve'?'✅ Teacher approved.':'❌ Request rejected.'); }
+  catch(e){ alert(`Action failed: ${e.message}`); } finally { hideLoading(); }
+}
+async function _processAdmissionAction(uid,action){
+  const admRef=doc(db,'schools',schoolId,'admissionRequests',uid);
+  const snap=await getDoc(admRef);
+  if(!snap.exists()) throw new Error('Request no longer exists.');
+  const data=snap.data();
+  if(action==='approve'){
+    const clean=obj=>Object.fromEntries(Object.entries(obj).filter(([_,v])=>v!==undefined));
+    const td=clean({uid,name:data.name||'',email:data.email||'',phone:data.phone||'',tsNumber:data.tsNumber||'',role:data.role||'teacher',position:data.position||'',subjects:Array.isArray(data.subjects)?data.subjects:[],profilePictureURL:data.profilePictureURL||'',approvedAt:serverTimestamp(),classes:[],assignedClasses:[]});
+    await setDoc(doc(db,'schools',schoolId,'teachers',uid),td,{merge:true});
+    await updateDoc(doc(db,'users',uid),{accountStatus:'active',approved:true});
+    await updateDoc(admRef,{requestStatus:'approved',processedAt:serverTimestamp(),processedBy:currentUser.uid});
+    await addDoc(collection(db,'users',uid,'notifications'),{title:'Admission Approved!',body:`Welcome to ${data.schoolName||'the school'}! Your account is now active.`,read:false,createdAt:serverTimestamp()});
+    await addDoc(collection(db,'schools',schoolId,'auditLog'),{action:'teacher_approved',targetUid:uid,performedBy:currentUser.uid,performedByName:currentUser.name||'Headteacher',timestamp:serverTimestamp()});
+  } else {
+    await updateDoc(admRef,{requestStatus:'rejected',processedAt:serverTimestamp(),processedBy:currentUser.uid});
+    await updateDoc(doc(db,'users',uid),{accountStatus:'rejected',approved:false});
+    await addDoc(collection(db,'users',uid,'notifications'),{title:'Admission Declined',body:'Your request has been declined. Please contact the school.',read:false,createdAt:serverTimestamp()});
+    await addDoc(collection(db,'schools',schoolId,'auditLog'),{action:'teacher_rejected',targetUid:uid,performedBy:currentUser.uid,performedByName:currentUser.name||'Headteacher',timestamp:serverTimestamp()});
+  }
+}
+function selectAllPending(){ document.querySelectorAll('.pending-checkbox').forEach(cb=>{cb.checked=true;bulkSelection.add(cb.value);}); }
+async function bulkAdmissionAction(action){
+  const uids=Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb=>cb.value);
+  if(!uids.length){alert('Select at least one.');return;}
+  if(!confirm(`${action} ${uids.length} request(s)?`)) return;
+  showLoading(); let processed=0;
+  for(const uid of uids){ try{await _processAdmissionAction(uid,action);processed++;}catch(e){console.warn(e.message);} }
+  hideLoading(); alert(`${action==='approve'?'Approved':'Rejected'} ${processed}/${uids.length} request(s).`);
+}
+window.addEventListener('beforeunload', detachTeacherListeners);
+
+// ═══════════════════════════════════════
+// KEY FIX 2: loadClasses()
+//
+// ORIGINAL BUG: Queried a 'classes' SUBCOLLECTION
+// under the teacher doc. But classes are stored as
+// an ARRAY FIELD ('assignedClasses' or 'classes')
+// on the teacher document itself — not as individual
+// Firestore subcollection documents.
+//
+// THE FIX: Read the teacher doc → extract the array
+// field → also try the subcollection as fallback →
+// merge both sources → populate dropdown.
+// ═══════════════════════════════════════
 async function loadClasses() {
   showLoading();
+  const select  = document.getElementById('classes-select');
+  const infoDiv = document.getElementById('class-selection-info');
+  select.innerHTML = '<option value="">-- Select Target Class --</option>';
   try {
-    const classesRef = collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'classes');
-    const classesSnap = await getDocs(classesRef);
-    const select = document.getElementById('classes-select');
-    select.innerHTML = '<option value="">-- Select Target Class --</option>';
-    classesSnap.forEach(doc => {
-      const option = document.createElement('option');
-      option.value = doc.id;
-      option.textContent = doc.data().displayName || doc.id;
+    // Read teacher doc to get array field
+    const teacherDoc  = await getDoc(doc(db,'schools',schoolId,'teachers',currentTeacherId));
+    const teacherData = teacherDoc.exists()?teacherDoc.data():{};
+    const fromField   = [...(teacherData.assignedClasses||[]),...(teacherData.classes||[])]
+      .map(c=>String(c).trim()).filter(Boolean);
+
+    // Also try subcollection (some teachers may have class docs synced there)
+    const classesSubSnap = await getDocs(collection(db,'schools',schoolId,'teachers',currentTeacherId,'classes'));
+    const classDocMap    = new Map();
+    classesSubSnap.forEach(d=>{
+      const data=d.data();
+      classDocMap.set(d.id, data.displayName||data.name||data.className||d.id);
+    });
+
+    // Merge both sources — subcollection display names take priority
+    const allClassIds=[...new Set([...classDocMap.keys(),...fromField])];
+
+    if(!allClassIds.length){
+      if(infoDiv){
+        infoDiv.style.display='block';
+        infoDiv.textContent='⚠️ This teacher has no classes assigned yet. Assign classes after approving the teacher.';
+      }
+      return;
+    }
+    if(infoDiv) infoDiv.style.display='none';
+
+    allClassIds.forEach(classId=>{
+      if(!classId) return;
+      const option=document.createElement('option');
+      option.value=classId;
+      // Use subcollection display name if available, else clean up the ID
+      option.textContent = classDocMap.get(classId) ||
+        classId.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       select.appendChild(option);
     });
-  } catch (error) { alert(`Error loading classes: ${error.message}`); } finally { hideLoading(); }
+    console.log(`[HT Dashboard] Loaded ${allClassIds.size||allClassIds.length} classes for teacher ${currentTeacherId}`);
+  } catch(e){ console.error('loadClasses error:',e); alert(`Error loading classes: ${e.message}`); }
+  finally { hideLoading(); }
 }
 
-document.getElementById('view-class-data').addEventListener('click', () => {
-  selectedClassId = document.getElementById('classes-select').value;
-  if (!selectedClassId) return alert('Please select a class first.');
-  showSection('data-view', { teacherId: currentTeacherId, classId: selectedClassId });
+document.getElementById('view-class-data').addEventListener('click',()=>{
+  selectedClassId=document.getElementById('classes-select').value;
+  if(!selectedClassId) return alert('Please select a class first.');
+  showSection('data-view',{teacherId:currentTeacherId,classId:selectedClassId});
   window.loadSectionData('students');
 });
 
-function getZambianGrade(score) {
-  if (score >= 80) return '1 (Distinction)';
-  if (score >= 70) return '2 (Distinction)';
-  if (score >= 60) return '3 (Merit)';
-  if (score >= 50) return '4 (Merit)';
-  if (score >= 40) return '5 (Credit)';
-  if (score >= 30) return '6 (Credit)';
-  if (score >= 20) return '7 (Pass)';
-  if (score >= 10) return '8 (Pass)';
+// ─── GRADING ─────────────────────────────
+function getZambianGrade(score){
+  if(score>=80) return '1 (Distinction)';
+  if(score>=70) return '2 (Distinction)';
+  if(score>=60) return '3 (Merit)';
+  if(score>=50) return '4 (Merit)';
+  if(score>=40) return '5 (Credit)';
+  if(score>=30) return '6 (Credit)';
+  if(score>=20) return '7 (Pass)';
+  if(score>=10) return '8 (Pass)';
   return '9 (Fail)';
 }
 
+// ═══════════════════════════════════════
+// KEY FIX 3: loadSectionData()
+//
+// ORIGINAL BUG 1: .replace('_',' ') only replaced
+// the FIRST underscore. Fixed using classIdVariants()
+// which uses regex /g to replace ALL occurrences.
+//
+// ORIGINAL BUG 2: attendance was queried with
+// where('term','==', selectedTerm) where selectedTerm
+// is string '1'. But teacher app may store term as
+// number 1, string "1", or "Term 1". Now we query
+// without term filter and filter in JS flexibly.
+// ═══════════════════════════════════════
 window.loadSectionData = async function(section) {
-  document.querySelectorAll('.section-tab').forEach(tab => tab.classList.remove('active'));
-  const activeTab = Array.from(document.querySelectorAll('.section-tab')).find(t => t.onclick.toString().includes(`'${section}'`));
-  if (activeTab) activeTab.classList.add('active');
-
+  document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
+  const at=Array.from(document.querySelectorAll('.section-tab')).find(t=>t.getAttribute('onclick')?.includes(`'${section}'`));
+  if(at) at.classList.add('active');
   showLoading();
-  const content = document.getElementById('data-content');
-  content.innerHTML = '';
-  const alertsDiv = document.getElementById('alerts-section');
-  alertsDiv.innerHTML = '';
+  const content=document.getElementById('data-content');
+  content.innerHTML='';
+  const alertsDiv=document.getElementById('alerts-section');
+  if(alertsDiv) alertsDiv.innerHTML='';
+
+  // KEY FIX: Use classIdVariants() for all queries
+  const variants = classIdVariants(selectedClassId);
+  console.log('[HT Dashboard] Querying classId variants:',variants);
 
   try {
-    if (section === 'students') {
-      
-      
-      const classIdSpace = selectedClassId.replace('_', ' ');
-const classIdUnderscore = selectedClassId.replace(' ', '_');
 
-const q = query(
-  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), 
-  where('classId', 'in', [classIdSpace, classIdUnderscore])
-);
 
-      
-      
-      const data = await getDocs(q);
-      if (data.empty) {
-        const p = document.createElement('p');
-        p.className = 'empty-state';
-        p.textContent = 'No students registered in this class yet.';
-        content.appendChild(p);
-      } else {
-        const headerDiv = document.createElement('div');
-        headerDiv.style.display = 'flex';
-        headerDiv.style.justifyContent = 'space-between';
-        headerDiv.style.alignItems = 'center';
-        headerDiv.style.marginBottom = '1.5rem';
-        headerDiv.innerHTML = `<h3 style="color:var(--text-light);"><i class="fas fa-users"></i> Total Enrollment: <span style="color:var(--accent); font-size:1.5rem;">${data.size}</span></h3>`;
-        content.appendChild(headerDiv);
+// ── STUDENTS ──────────────────────────────
+if(section==='students'){
+  // Students live at schools/{schoolId}/students, NOT under the teacher
+  // Filter by classId variants AND by the teacher's assigned classes
+  const q = query(
+    collection(db, 'schools', schoolId, 'students'),
+    where('classId', 'in', variants)
+  );
+  const data = await getDocs(q);
 
-        const searchInput = document.createElement('input');
-        searchInput.className = 'search-input';
-        searchInput.type = 'text';
-        searchInput.placeholder = '🔍 Quick search by student name...';
-        content.appendChild(searchInput);
+  if(data.empty){
+    content.innerHTML=`<p class="empty-state"><i class="fas fa-user-graduate"></i> No students found for class "${selectedClassId}".<br><small>Checked variants: ${variants.join(', ')}</small></p>`;
+    return;
+  }
 
-        const tableContainer = createTable(['System ID', 'Student Full Name', 'Action']);
-        let studentRows = [];
-        data.forEach(doc => {
-            const d = doc.data();
-            const btnHtml = `<button class="view-student-btn" data-student-id="${doc.id}" style="padding:6px 16px; margin:0; width:auto; border-radius:20px; font-size:0.9rem;"><i class="fas fa-id-card"></i> Profile</button>`;
-            studentRows.push([doc.id, d.name, btnHtml]);
+  const hd=document.createElement('div');
+  hd.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;';
+  hd.innerHTML=`<div style="background:var(--g50);border:1px solid var(--g100);border-radius:10px;padding:8px 16px;font-size:.9rem;font-weight:700;color:var(--g700);"><i class="fas fa-users"></i> Total Enrollment: <span style="font-size:1.2rem;font-family:var(--ff-display);">${data.size}</span></div>`;
+  content.appendChild(hd);
+
+  const si=document.createElement('input'); 
+  si.className='search-input'; 
+  si.placeholder='🔍 Quick search by student name…';
+  content.appendChild(si);
+
+  const tc=createTable(['Student ID','Student Full Name','Action']);
+  data.forEach(ds=>{
+    const d=ds.data();
+    const bh=`<button class="view-student-btn" data-student-id="${ds.id}" style="padding:5px 14px;margin:0;width:auto;border-radius:20px;font-size:.82rem;"><i class="fas fa-id-card"></i> Profile</button>`;
+    addRow(tc,[d.studentId||ds.id, d.name, bh]);
+  });
+
+  const tbody=tc.querySelector('tbody');
+  Array.from(tbody.rows).sort((a,b)=>a.cells[1].textContent.localeCompare(b.cells[1].textContent)).forEach(r=>tbody.appendChild(r));
+  content.appendChild(tc); makeSortable(tc);
+
+  document.querySelectorAll('.view-student-btn').forEach(btn=>
+    btn.addEventListener('click', async e => await loadStudentDetails(e.currentTarget.dataset.studentId))
+  );
+  si.addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase();
+    tc.querySelectorAll('tbody tr').forEach(row=>{
+      row.style.display=row.cells[1].textContent.toLowerCase().includes(q)?'':'none';
+    });
+  });
+}
+
+    // ── ATTENDANCE ────────────────────────────
+    else if(section==='attendance'){
+      const fd=document.createElement('div');
+      fd.style.cssText='display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:flex-end;';
+      const termSel=document.createElement('select');
+      termSel.innerHTML='<option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option>';
+      termSel.value=selectedTerm;
+      Object.assign(termSel.style,{width:'auto',padding:'8px 12px',borderRadius:'8px',margin:'0'});
+      const wi=document.createElement('input'); wi.type='number'; wi.placeholder='Filter Week…';
+      Object.assign(wi.style,{padding:'8px 12px',width:'140px',borderRadius:'8px',margin:'0'});
+      const si=document.createElement('input'); si.type='text'; si.placeholder='Search Student ID or Name…';
+      Object.assign(si.style,{padding:'8px 12px',width:'240px',borderRadius:'8px',margin:'0'});
+      fd.append(termSel,wi,si); content.appendChild(fd);
+      const tw=document.createElement('div'); content.appendChild(tw);
+
+      // KEY FIX: Query without term filter — filter in JS to handle all formats
+      const q=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'attendanceHistory'),where('classId','in',variants));
+      const data=await getDocs(q);
+      if(data.empty){ tw.innerHTML='<p class="empty-state"><i class="fas fa-calendar-times"></i> No attendance logs found for this class.</p>'; return; }
+
+      let allRecords=[];
+      data.forEach(ds=>allRecords.push(ds.data()));
+      allRecords.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+
+      const render=()=>{
+        tw.innerHTML='';
+        const termVal=termSel.value;
+        const wv=wi.value.trim(); const sv=si.value.trim().toLowerCase();
+        // KEY FIX: Flexible term matching — handles "1", 1, and "Term 1"
+        const filtered=allRecords.filter(d=>{
+          const dTerm=String(d.term||'').replace(/term\s*/i,'').trim();
+          const mt=dTerm===termVal;
+          const mw=wv===''||String(d.week)===wv;
+          const ms=sv===''||(d.studentId?String(d.studentId).toLowerCase().includes(sv):false)||(d.studentName?String(d.studentName).toLowerCase().includes(sv):false);
+          return mt&&mw&&ms;
         });
-        
-        studentRows.forEach(row => addRow(tableContainer, row));
-        content.appendChild(tableContainer);
-        makeSortable(tableContainer);
-
-        document.querySelectorAll('.view-student-btn').forEach(btn => {
-          btn.addEventListener('click', async (e) => { await loadStudentDetails(e.currentTarget.dataset.studentId); });
+        if(!filtered.length){ tw.innerHTML='<p class="empty-state" style="margin-top:16px;">No records match your filters.</p>'; return; }
+        const pc=filtered.filter(d=>d.present).length;
+        const pct=((pc/filtered.length)*100).toFixed(0);
+        const sb=document.createElement('div'); sb.style.cssText='display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1rem;';
+        sb.innerHTML=`<div style="background:var(--g50);border:1px solid var(--g100);border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:700;color:var(--g700);"><i class="fas fa-list"></i> ${filtered.length} records</div>
+          <div style="background:var(--g50);border:1px solid var(--g100);border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:700;color:var(--g700);"><i class="fas fa-check-circle"></i> ${pc} present</div>
+          <div style="background:${pct<60?'#fef2f2':'var(--g50)'};border:1px solid ${pct<60?'#fecaca':'var(--g100)'};border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:700;color:${pct<60?'var(--red)':'var(--g700)'};"><i class="fas fa-percentage"></i> ${pct}% rate</div>`;
+        tw.appendChild(sb);
+        const tc=createTable(['Date','Student ID','Status','Term','Week','Cloud Sync Time']);
+        filtered.forEach(d=>{
+          const sd=d.syncedAt?fmtDateTime(parseFirestoreDate(d.syncedAt)):'Pending';
+          const sh=d.present?'<span class="badge-present"><i class="fas fa-check-circle"></i> Present</span>':'<span class="badge-absent"><i class="fas fa-times-circle"></i> Absent</span>';
+          addRow(tc,[fmtDate(d.date),d.studentId||'—',sh,d.term||'—',d.week||'—',sd]);
         });
-
-        searchInput.addEventListener('input', (e) => {
-          const query = e.target.value.toLowerCase();
-          const rows = tableContainer.querySelectorAll('tbody tr');
-          rows.forEach(row => {
-            const nameCell = row.cells[1].textContent.toLowerCase();
-            row.style.display = nameCell.includes(query) ? '' : 'none';
-          });
-        });
-      }
-    } 
-    
-    
-    
-    
-   else if (section === 'attendance') {
-      const filterDiv = document.createElement('div');
-      filterDiv.style.display = 'flex';
-      filterDiv.style.gap = '15px';
-      filterDiv.style.marginBottom = '1.5rem';
-      filterDiv.style.flexWrap = 'wrap'; // Ensures it looks good on mobile/APK screens!
-      filterDiv.style.alignItems = 'center';
-      
-      // 1. Term Filter (Already existing)
-      const termSelect = document.createElement('select');
-      termSelect.innerHTML = `<option value="1">Filter: Term 1</option><option value="2">Filter: Term 2</option><option value="3">Filter: Term 3</option>`;
-      termSelect.value = selectedTerm;
-      termSelect.style.width = 'auto';
-      termSelect.style.padding = '8px';
-      termSelect.style.borderRadius = '5px';
-      
-      // 2. NEW: Week Filter
-      const weekInput = document.createElement('input');
-      weekInput.type = 'number';
-      weekInput.placeholder = 'Filter Week (e.g. 4)';
-      weekInput.style.padding = '8px';
-      weekInput.style.width = '160px';
-      weekInput.style.borderRadius = '5px';
-      
-      // 3. NEW: Student Search Filter
-      const searchInput = document.createElement('input');
-      searchInput.type = 'text';
-      searchInput.placeholder = 'Search Student ID or Name...';
-      searchInput.style.padding = '8px';
-      searchInput.style.width = '250px';
-      searchInput.style.borderRadius = '5px';
-      
-      filterDiv.appendChild(termSelect);
-      filterDiv.appendChild(weekInput);
-      filterDiv.appendChild(searchInput);
-      content.appendChild(filterDiv);
-      
-      // Create a wrapper for the table so we can easily replace its contents when filtering
-      const tableWrapper = document.createElement('div');
-      content.appendChild(tableWrapper);
-      
-      const classIdSpace = selectedClassId.replace('_', ' ');
-      const classIdUnderscore = selectedClassId.replace(' ', '_');
-      
-      // Fetching ONLY by Class and Term to avoid complex Firestore Index requirements
-      const q = query(
-        collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'attendanceHistory'),
-        where('classId', 'in', [classIdSpace, classIdUnderscore]),
-        where('term', '==', selectedTerm)
-      );
-      
-      const data = await getDocs(q);
-      
-      if (data.empty) {
-        tableWrapper.innerHTML = '<p class="empty-state">No attendance logs found for this term.</p>';
-      } else {
-        // Store all fetched records in a master array so we can filter them instantly
-        let allRecords = [];
-        data.forEach(doc => allRecords.push(doc.data()));
-        
-        // Sort newest first
-        allRecords.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-        
-        // --- THE FILTERING ENGINE ---
-        const renderFilteredTable = () => {
-          tableWrapper.innerHTML = ''; // Clear the current table
-          
-          const weekFilterValue = weekInput.value.trim();
-          const searchFilterValue = searchInput.value.trim().toLowerCase();
-          
-          // Filter the master array based on what the headteacher typed
-          const filteredRecords = allRecords.filter(d => {
-            // 1. Check Week Match
-            const matchesWeek = weekFilterValue === '' || String(d.week) === weekFilterValue;
-            
-            // 2. Check Student ID or Name Match (Safely handles missing data)
-            const studentIdStr = d.studentId ? String(d.studentId).toLowerCase() : '';
-            // NOTE: If your database has 'studentName', it will search that too!
-            const studentNameStr = d.studentName ? String(d.studentName).toLowerCase() : ''; 
-            
-            const matchesSearch = searchFilterValue === '' || 
-                                  studentIdStr.includes(searchFilterValue) || 
-                                  studentNameStr.includes(searchFilterValue);
-            
-            // Record must match BOTH the week (if entered) AND the search term (if entered)
-            return matchesWeek && matchesSearch;
-          });
-          
-          // If the filters resulted in 0 matches
-          if (filteredRecords.length === 0) {
-            tableWrapper.innerHTML = '<p class="empty-state" style="margin-top: 20px; font-weight: bold;">No records match your filters.</p>';
-            return;
-          }
-          
-          // Build the table with the filtered data
-          const tableContainer = createTable(['Log Date', 'Student ID', 'Status', 'Term', 'Week', 'Cloud Sync Time']);
-          
-          filteredRecords.forEach(d => {
-            let syncDisplay = d.syncedAt ? parseFirestoreDate(d.syncedAt).toLocaleString() : 'Pending';
-            let statusHtml = d.present 
-              ? '<span style="color:var(--accent); font-weight:bold;"><i class="fas fa-check-circle"></i> Present</span>' 
-              : '<span style="color:var(--alert-red); font-weight:bold;"><i class="fas fa-times-circle"></i> Absent</span>';
-            
-            addRow(tableContainer, [d.date, d.studentId, statusHtml, d.term, d.week, syncDisplay]);
-          });
-          
-          tableWrapper.appendChild(tableContainer);
-          
-          // Re-apply sortable logic to the newly created table
-          if (typeof makeSortable === 'function') {
-            makeSortable(tableContainer);
-          }
-        };
-
-        // 1. Initial render when data first loads
-        renderFilteredTable();
-
-        // 2. Event Listeners for the filters
-        
-        // Term still triggers a full database fetch because we only pull one term at a time
-        termSelect.addEventListener('change', (e) => { 
-          selectedTerm = e.target.value; 
-          window.loadSectionData('attendance'); 
-        });
-        
-        // 'input' event makes it filter INSTANTLY as the user types ⚡
-        weekInput.addEventListener('input', renderFilteredTable);
-        searchInput.addEventListener('input', renderFilteredTable);
-      }
+        tw.appendChild(tc); makeSortable(tc);
+      };
+      render();
+      termSel.addEventListener('change',e=>{selectedTerm=e.target.value;render();});
+      wi.addEventListener('input',render); si.addEventListener('input',render);
     }
 
-    
-    
-    
-    
-    else if (section === 'results') {
-      
-      const classIdSpace = selectedClassId.replace('_', ' ');
-const classIdUnderscore = selectedClassId.replace(' ', '_');
-
-const q = query(
-  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'), 
-  where('classId', 'in', [classIdSpace, classIdUnderscore])
-);
-
-      
-      const data = await getDocs(q);
-      currentResultsData = [];
-      if (data.empty) {
-        const p = document.createElement('p');
-        p.className = 'empty-state';
-        p.textContent = 'No academic results published yet.';
-        content.appendChild(p);
-      } else {
-        const btnContainer = document.createElement('div');
-        btnContainer.style.display = 'flex';
-        btnContainer.style.gap = '15px';
-        btnContainer.style.marginBottom = '2rem';
-        btnContainer.style.background = '#f8f9fa';
-        btnContainer.style.padding = '15px';
-        btnContainer.style.borderRadius = '12px';
-
-        const analyticsBtn = document.createElement('button');
-        analyticsBtn.innerHTML = '<i class="fas fa-chart-line"></i> Open Visual Analytics';
-        analyticsBtn.onclick = window.showAnalyticsModal;
-        analyticsBtn.style.margin = '0';
-        
-        const pdfBtn = document.createElement('button');
-        pdfBtn.classList.add('export-btn');
-        pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Generate PDF Report';
-        pdfBtn.onclick = exportResultsToPDF;
-        pdfBtn.style.margin = '0';
-
-        btnContainer.append(analyticsBtn, pdfBtn);
-        content.appendChild(btnContainer);
-
-        data.forEach(doc => {
-          const d = doc.data();
-          currentResultsData.push(d);
-
-          const card = document.createElement('div');
-          card.style.border = '1px solid #e9ecef';
-          card.style.borderRadius = '12px';
-          card.style.padding = '20px';
-          card.style.marginBottom = '20px';
-
-          const h3 = document.createElement('h3');
-          h3.style.margin = '0 0 1rem 0';
-          h3.style.color = 'var(--accent)';
-          h3.innerHTML = `<i class="fas fa-book-open"></i> ${d.subject} <span style="color:#6c757d; font-size:0.9em;">| ${d.testName}</span>`;
-          card.appendChild(h3);
-
-          const tableContainer = createTable(['Student ID', 'Score (%)', 'Official Grade']);
-          if (d.scores) {
-            Object.entries(d.scores).forEach(([studentId, score]) => {
-              let grade = getZambianGrade(score);
-              let gradeHtml = grade.includes('Fail') ? `<span class="highlight-red">${grade}</span>` : `<span style="color:#1e6b3a; font-weight:600;">${grade}</span>`;
-              addRow(tableContainer, [studentId, `${score}%`, gradeHtml]);
-            });
-          }
-          card.appendChild(tableContainer);
-          makeSortable(tableContainer);
-          content.appendChild(card);
-        });
-      }
-    } 
-    
-    
-    
-    
-    
-
-    else if (section === 'fees') {
-      const configRef = doc(db, 'schools', schoolId, 'teachers', currentTeacherId, 'feesConfig', selectedClassId);
-      const configSnap = await getDoc(configRef);
-      const totalFee = configSnap.exists() ? configSnap.data().totalFee || 0 : 0;
-
-      const studentsQ = query(collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students'), where('classId', '==', selectedClassId));
-      const studentsSnap = await getDocs(studentsQ);
-      const studentsMap = new Map();
-      let studentCount = 0;
-      studentsSnap.forEach(doc => { studentsMap.set(doc.id, doc.data()); studentCount++; });
-      const expectedTotal = totalFee * studentCount;
-
-      const classIdSpace = selectedClassId.replace('_', ' ');
-      const classIdUnderscore = selectedClassId.replace(' ', '_');
-
-      const feesQ = query(
-        collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'fees'), 
-        where('classId', 'in', [classIdSpace, classIdUnderscore])
-      );
-      const feesData = await getDocs(feesQ);
-
-      const overviewDiv = document.createElement('div');
-      overviewDiv.style.marginBottom = '2rem';
-      overviewDiv.style.background = '#f8f9fa';
-      overviewDiv.style.padding = '20px';
-      overviewDiv.style.borderRadius = '12px';
-      overviewDiv.style.borderLeft = '5px solid var(--accent)';
-      overviewDiv.innerHTML = `
-        <h3 style="margin-bottom:15px;"><i class="fas fa-bullseye"></i> Class Target Fee: <span style="color:var(--accent); font-size:1.5rem;">K${totalFee}</span> <span style="font-size:1rem; color:#6c757d; font-weight:normal;">/ student</span></h3>
-        <input id="fees-filter" class="search-input" type="text" placeholder="🔍 Find student financial record..." style="margin:0;">
-      `;
-      content.appendChild(overviewDiv);
-
-      if (feesData.empty) {
-        const p = document.createElement('p');
-        p.className = 'empty-state';
-        p.textContent = 'No financial transactions recorded yet.';
-        content.appendChild(p);
-      } else {
-        const studentPayments = new Map();
-        let totalCollected = 0;
-        
-        feesData.forEach(doc => {
-          const d = doc.data();
-          const studentId = d.studentId || d.id || doc.id; 
-          
-          if (!studentPayments.has(studentId)) studentPayments.set(studentId, []);
-          
-          let syncDisplay = d.syncedAt ? parseFirestoreDate(d.syncedAt).toLocaleString() : 'Pending';
-
-          if (Array.isArray(d.payments)) {
-            d.payments.forEach(payment => {
-              const amount = Number(payment.amount) || 0;
-              studentPayments.get(studentId).push({
-                date: payment.date || 'N/A',
-                amount: amount,
-                status: payment.status || 'Paid',
-                syncedAt: syncDisplay
-              });
-              totalCollected += amount;
-            });
-          } else if (d.amount) {
-              const amount = Number(d.amount) || 0;
-              studentPayments.get(studentId).push({
-                date: d.date || 'N/A',
-                amount: amount,
-                status: d.status || 'Paid',
-                syncedAt: syncDisplay
-              });
-              totalCollected += amount;
-          }
-        });
-
-        const outstandingTotal = expectedTotal - totalCollected;
-        const percentage = expectedTotal > 0 ? ((totalCollected / expectedTotal) * 100).toFixed(1) : 0;
-        
-        const summary = document.createElement('div');
-        summary.style.marginBottom = '2rem';
-        summary.style.background = 'white';
-        summary.style.padding = '1.5rem';
-        summary.style.borderRadius = '12px';
-        summary.style.boxShadow = 'var(--shadow)';
-        summary.style.display = 'grid';
-        summary.style.gridTemplateColumns = 'repeat(4, 1fr)';
-        summary.style.gap = '15px';
-        summary.style.textAlign = 'center';
-        summary.innerHTML = `
-          <div><p style="color:#6c757d; font-weight:600; font-size:0.9rem;">Expected Total</p><p style="font-size:1.5rem; font-weight:800; color:#343a40;">K${expectedTotal}</p></div>
-          <div><p style="color:#6c757d; font-weight:600; font-size:0.9rem;">Collected</p><p style="font-size:1.5rem; font-weight:800; color:var(--accent);">K${totalCollected}</p></div>
-          <div><p style="color:#6c757d; font-weight:600; font-size:0.9rem;">Outstanding</p><p style="font-size:1.5rem; font-weight:800; color:var(--alert-red);">K${outstandingTotal}</p></div>
-          <div><p style="color:#6c757d; font-weight:600; font-size:0.9rem;">Collection Rate</p><p style="font-size:1.5rem; font-weight:800; color:#0d6efd;">${percentage}%</p></div>
-        `;
-        content.appendChild(summary);
-
-        studentsMap.forEach((student, studentId) => {
-          const payments = (studentPayments.get(studentId) || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-          const card = document.createElement('div');
-          card.className = 'student-fees-card';
-          card.dataset.studentName = student.name.toLowerCase();
-
-          const header = document.createElement('h3');
-          header.style.marginBottom = '1rem';
-          header.innerHTML = `<i class="fas fa-user-circle" style="color:#adb5bd; font-size:1.5rem; vertical-align:middle;"></i> <span style="vertical-align:middle; margin-left:10px;">${student.name} <span style="font-size:0.9rem; color:#6c757d;">(ID: ${studentId})</span></span>`;
-          card.appendChild(header);
-
-          const tableContainer = createTable(['Date', 'Status', 'Amount Paid', 'Cloud Sync', 'Acc. Total']);
-          let running = 0;
-          let lastDate = '';
-          payments.forEach(p => {
-            running += p.amount;
-            let statusHtml = `<span style="background:var(--soft-green); color:var(--accent); padding:4px 10px; border-radius:20px; font-size:0.85rem; font-weight:bold;">${p.status}</span>`;
-            addRow(tableContainer, [p.date, statusHtml, `K${p.amount}`, p.syncedAt, `K${running}`]);
-            lastDate = p.date;
-          });
-          card.appendChild(tableContainer);
-          makeSortable(tableContainer);
-
-          const outstanding = totalFee - running;
-          const footerDiv = document.createElement('div');
-          footerDiv.style.marginTop = '1.5rem';
-          footerDiv.style.padding = '15px';
-          footerDiv.style.background = outstanding > 0 ? '#fff5f5' : '#f8fff8';
-          footerDiv.style.borderRadius = '8px';
-          footerDiv.style.display = 'flex';
-          footerDiv.style.justifyContent = 'space-between';
-          footerDiv.innerHTML = `
-            <span style="font-weight:600;">Total Paid: <span style="color:var(--accent); font-size:1.2rem;">K${running}</span></span>
-            <span style="font-weight:600;">Balance: <span style="color:${outstanding > 0 ? 'var(--alert-red)' : 'var(--accent)'}; font-size:1.2rem;">K${outstanding > 0 ? outstanding : 0}</span></span>
-          `;
-          card.appendChild(footerDiv);
-          content.appendChild(card);
-        });
-      }
-
-      setTimeout(() => {
-        const filterInput = document.getElementById('fees-filter');
-        if (filterInput) {
-          filterInput.addEventListener('input', (e) => {
-            const q = e.target.value.toLowerCase().trim();
-            document.querySelectorAll('.student-fees-card').forEach(card => {
-              card.style.display = card.dataset.studentName.includes(q) ? 'block' : 'none';
-            });
-          });
-        }
-      }, 100);
+    // ── RESULTS ───────────────────────────────
+    else if(section==='results'){
+      const q=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'results'),where('classId','in',variants));
+      const data=await getDocs(q);
+      currentResultsData=[];
+      if(data.empty){ content.innerHTML='<p class="empty-state"><i class="fas fa-chart-bar"></i> No academic results published yet.</p>'; return; }
+      const bc=document.createElement('div');
+      bc.style.cssText='display:flex;gap:12px;margin-bottom:1.5rem;background:var(--g50);padding:12px;border-radius:var(--radius);border:1px solid var(--wire);flex-wrap:wrap;';
+      const ab=document.createElement('button'); ab.innerHTML='<i class="fas fa-chart-line"></i> Open Visual Analytics'; ab.onclick=window.showAnalyticsModal; ab.style.cssText='margin:0;width:auto;';
+      const pb=document.createElement('button'); pb.classList.add('export-btn'); pb.innerHTML='<i class="fas fa-file-pdf"></i> Generate PDF Report'; pb.onclick=exportResultsToPDF; pb.style.cssText='margin:0;width:auto;';
+      bc.append(ab,pb); content.appendChild(bc);
+      const sd=[];
+      data.forEach(ds=>sd.push({id:ds.id,...ds.data()}));
+      sd.sort((a,b)=>new Date(b.date||b.createdAt||0)-new Date(a.date||a.createdAt||0));
+      sd.forEach(d=>{
+        currentResultsData.push(d);
+        const card=document.createElement('div');
+        card.style.cssText='border:1px solid var(--wire);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.25rem;';
+        const h3=document.createElement('h3');
+        h3.style.cssText='margin:0 0 .75rem;color:var(--g700);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;';
+        h3.innerHTML=`<span><i class="fas fa-book-open"></i> ${d.subject||'—'} <span style="color:var(--muted);font-size:.85em;font-weight:500;">| ${d.testName||'—'}</span></span>${d.date?`<span class="date-chip"><i class="fas fa-calendar-day"></i> ${fmtDate(d.date)}</span>`:''}`;
+        card.appendChild(h3);
+        const tc=createTable(['Student ID','Score (%)','Official Grade']);
+        if(d.scores){ Object.entries(d.scores).sort((a,b)=>b[1]-a[1]).forEach(([sid,score])=>{
+          const g=getZambianGrade(score);
+          addRow(tc,[sid,`${score}%`,g.includes('Fail')?`<span class="highlight-red">${g}</span>`:`<span class="highlight-green">${g}</span>`]);
+        }); }
+        card.appendChild(tc); makeSortable(tc); content.appendChild(card);
+      });
     }
-  } catch (error) {
-    const p = document.createElement('p');
-    p.className = 'empty-state';
-    p.textContent = `System Error: ${error.message}`;
-    content.appendChild(p);
+
+    // ── FEES ──────────────────────────────────
+    else if(section==='fees'){
+      const configRef=doc(db,'schools',schoolId,'teachers',currentTeacherId,'feesConfig',selectedClassId);
+      const configSnap=await getDoc(configRef);
+      const totalFee=configSnap.exists()?configSnap.data().totalFee||0:0;
+      const studQ=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'students'),where('classId','in',variants));
+      const studSnap=await getDocs(studQ);
+      const studMap=new Map(); studSnap.forEach(ds=>studMap.set(ds.id,ds.data()));
+      const expectedTotal=totalFee*studMap.size;
+      const feesQ=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'fees'),where('classId','in',variants));
+      const feesData=await getDocs(feesQ);
+      const ov=document.createElement('div');
+      ov.style.cssText='margin-bottom:1.5rem;background:var(--g50);padding:1.25rem;border-radius:var(--radius);border:1px solid var(--wire);';
+      ov.innerHTML=`<h3 style="margin-bottom:.75rem;"><i class="fas fa-bullseye" style="color:var(--g600);"></i> Class Target Fee: <span style="color:var(--g600);font-weight:800;">K${totalFee}</span> <span style="font-size:.85rem;color:var(--muted);"> / student</span></h3>
+        <input id="fees-filter" class="search-input" type="text" placeholder="🔍 Find student financial record…" style="margin:0;">`;
+      content.appendChild(ov);
+      if(feesData.empty){ content.innerHTML+='<p class="empty-state"><i class="fas fa-money-bill-wave"></i> No financial transactions recorded yet.</p>'; return; }
+      const spMap=new Map(); let totalCollected=0;
+      feesData.forEach(ds=>{
+        const d=ds.data(); const sid=d.studentId||d.id||ds.id;
+        if(!spMap.has(sid)) spMap.set(sid,[]);
+        const sd=d.syncedAt?fmtDateTime(parseFirestoreDate(d.syncedAt)):'Pending';
+        if(Array.isArray(d.payments)){ d.payments.forEach(p=>{ const a=Number(p.amount)||0; spMap.get(sid).push({date:p.date||'N/A',amount:a,status:p.status||'Paid',syncedAt:sd}); totalCollected+=a; }); }
+        else if(d.amount){ const a=Number(d.amount)||0; spMap.get(sid).push({date:d.date||'N/A',amount:a,status:d.status||'Paid',syncedAt:sd}); totalCollected+=a; }
+      });
+      const out=expectedTotal-totalCollected;
+      const pct=expectedTotal>0?((totalCollected/expectedTotal)*100).toFixed(1):0;
+      const sumDiv=document.createElement('div');
+      sumDiv.style.cssText='margin-bottom:1.5rem;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;';
+      sumDiv.innerHTML=`
+        <div style="background:var(--white);border:1px solid var(--wire);border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Expected</p><p style="font-size:1.5rem;">K${expectedTotal}</p></div>
+        <div style="background:var(--g50);border:1px solid var(--g100);border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Collected</p><p style="font-size:1.5rem;color:var(--g600);">K${totalCollected}</p></div>
+        <div style="background:${out>0?'#fef2f2':'var(--g50)'};border:1px solid ${out>0?'#fecaca':'var(--g100)'};border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Outstanding</p><p style="font-size:1.5rem;color:${out>0?'var(--red)':'var(--g600)'};">K${out>0?out:0}</p></div>
+        <div style="background:var(--white);border:1px solid var(--wire);border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Collection Rate</p><p style="font-size:1.5rem;color:var(--blue);">${pct}%</p></div>`;
+      content.appendChild(sumDiv);
+      studMap.forEach((student,studentId)=>{
+        const payments=(spMap.get(studentId)||[]).sort((a,b)=>new Date(b.date)-new Date(a.date));
+        const card=document.createElement('div'); card.className='student-fees-card'; card.dataset.studentName=(student.name||'').toLowerCase();
+        const h3=document.createElement('h3'); h3.style.cssText='margin-bottom:.75rem;font-size:1.1rem;';
+        h3.innerHTML=`<i class="fas fa-user-circle" style="color:var(--muted);margin-right:8px;"></i>${student.name||'Unknown'} <span style="font-size:.82rem;color:var(--muted);">(ID: ${studentId})</span>`;
+        card.appendChild(h3);
+        const tc=createTable(['Date','Status','Amount Paid','Cloud Sync','Running Total']);
+        let running=0;
+        payments.forEach(p=>{ running+=p.amount; addRow(tc,[fmtDate(p.date),`<span style="background:var(--g50);color:var(--g600);padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700;border:1px solid var(--g100);">${p.status}</span>`,`K${p.amount}`,p.syncedAt,`K${running}`]); });
+        card.appendChild(tc); makeSortable(tc);
+        const bal=totalFee-running;
+        const fd=document.createElement('div');
+        fd.style.cssText=`margin-top:1rem;padding:12px 16px;background:${bal>0?'#fef2f2':'var(--g50)'};border-radius:8px;display:flex;justify-content:space-between;font-weight:700;font-size:.9rem;`;
+        fd.innerHTML=`<span>Total Paid: <span style="color:var(--g600);font-size:1.1rem;">K${running}</span></span><span>Balance: <span style="color:${bal>0?'var(--red)':'var(--g600)'};font-size:1.1rem;">K${bal>0?bal:0}</span></span>`;
+        card.appendChild(fd); content.appendChild(card);
+      });
+      setTimeout(()=>{ const fi=document.getElementById('fees-filter'); if(fi) fi.addEventListener('input',e=>{ const q=e.target.value.toLowerCase().trim(); document.querySelectorAll('.student-fees-card').forEach(c=>{c.style.display=c.dataset.studentName.includes(q)?'block':'none';}); }); },100);
+    }
+  } catch(e) {
+    content.innerHTML=`<p class="empty-state"><i class="fas fa-exclamation-triangle"></i> System Error: ${e.message}</p>`;
+    console.error('loadSectionData error:',e);
   } finally { hideLoading(); }
 };
+
+
 
 async function loadStudentDetails(studentId) {
   const content = document.getElementById('data-content');
   showLoading();
   try {
-    const studentRef = doc(db, 'schools', schoolId, 'teachers', currentTeacherId, 'students', studentId);
-    const studentSnap = await getDoc(studentRef);
-    if (!studentSnap.exists()) {
-      content.innerHTML = '<p class="empty-state">Student profile not found in database.</p>';
+    // Fixed: students are at schools/{schoolId}/students/{studentId}
+    const snap = await getDoc(doc(db, 'schools', schoolId, 'students', studentId));
+    if (!snap.exists()) {
+      content.innerHTML = '<p class="empty-state">Student profile not found.</p>';
       return;
     }
-    const student = studentSnap.data();
-    content.innerHTML = `<h3 style="margin-bottom:20px; border-bottom:2px solid #f1f1f1; padding-bottom:10px;"><i class="fas fa-user-graduate"></i> Student Dossier</h3>`;
+    const s = snap.data();
+    content.innerHTML = `<h3 style="margin-bottom:1.25rem;font-size:1.4rem;border-bottom:2px solid var(--wire);padding-bottom:.75rem;"><i class="fas fa-user-graduate" style="color:var(--g600);"></i> Student Dossier</h3>`;
     
-    const detailsTableContainer = createTable(['System ID', 'Registered Name', 'Guardian Contact']);
-    addRow(detailsTableContainer, [studentId, student.name || 'N/A', student.phone || 'N/A']);
-    content.appendChild(detailsTableContainer);
+    const tc = createTable(['Student ID', 'Full Name', 'Class', 'Gender', 'DOB', 'Guardian', 'Contact', 'Status']);
+    addRow(tc, [
+      s.studentId || studentId,
+      s.name || 'N/A',
+      (s.classId || '—').replace(/_/g, ' '),
+      s.gender || '—',
+      s.dob || '—',
+      s.guardianName || '—',
+      s.guardianPhone || '—',
+      s.status || '—'
+    ]);
+    content.appendChild(tc);
     
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '<i class="fas fa-times"></i> Close Profile';
-    closeBtn.classList.add('exit-btn');
-    closeBtn.addEventListener('click', () => { window.loadSectionData('students'); });
-    content.appendChild(closeBtn);
-  } catch (error) {
-    content.innerHTML = `<p class="empty-state">Error: ${error.message}</p>`;
-  } finally { hideLoading(); }
+    const cb = document.createElement('button');
+    cb.innerHTML = '<i class="fas fa-times"></i> Close Profile';
+    cb.className = 'exit-btn';
+    cb.style.marginTop = '1rem';
+    cb.addEventListener('click', () => window.loadSectionData('students'));
+    content.appendChild(cb);
+  } catch (e) {
+    content.innerHTML = `<p class="empty-state">Error: ${e.message}</p>`;
+  } finally {
+    hideLoading();
+  }
 }
 
-async function loadSchoolSettings() {
-  showLoading();
-  try {
-    const schoolDoc = await getDoc(doc(db, 'schools', schoolId));
-    if (schoolDoc.exists()) {
-      const data = schoolDoc.data();
-      document.getElementById('school-address').value = data.address || '';
-      document.getElementById('school-phone').value = data.phone || '';
-      document.getElementById('school-email').value = data.email || '';
-    }
-  } catch (error) { alert(`Error loading settings`); } finally { hideLoading(); }
-}
 
-document.getElementById('save-settings-btn').addEventListener('click', async () => {
+// ─── SETTINGS ─────────────────────────────
+async function loadSchoolSettings(){
   showLoading();
   try {
-    await updateDoc(doc(db, 'schools', schoolId), {
-      address: document.getElementById('school-address').value,
-      phone: document.getElementById('school-phone').value,
-      email: document.getElementById('school-email').value
-    });
-    alert('Settings saved successfully');
-  } catch (error) { alert(`Error saving settings`); } finally { hideLoading(); }
+    const sd=await getDoc(doc(db,'schools',schoolId));
+    if(sd.exists()){ const d=sd.data(); document.getElementById('school-address').value=d.address||''; document.getElementById('school-phone').value=d.phone||''; document.getElementById('school-email').value=d.email||''; }
+  } catch(e){ alert('Error loading settings: '+e.message); } finally { hideLoading(); }
+}
+document.getElementById('save-settings-btn').addEventListener('click', async()=>{
+  showLoading();
+  try {
+    await updateDoc(doc(db,'schools',schoolId),{address:document.getElementById('school-address').value,phone:document.getElementById('school-phone').value,email:document.getElementById('school-email').value});
+    alert('Settings saved ✅');
+  } catch(e){ alert('Error: '+e.message); } finally { hideLoading(); }
 });
 
-async function loadSummaryCards() {
-  showLoading();
-  const summaryDiv = document.getElementById('summary-cards');
-  summaryDiv.innerHTML = '';
+// ═══════════════════════════════════════
+// KEY FIX 4: loadSummaryCards()
+//
+// ORIGINAL BUG: Looped through teacher subcollection
+// 'classes' docs which don't exist — classes are
+// stored as array fields on the teacher doc.
+// Also hit many Firestore reads causing rate issues.
+//
+// THE FIX: Read teacher docs → get class arrays →
+// use those classIds for subsequent queries.
+// ═══════════════════════════════════════
+
+
+async function loadSummaryCards(){
+  // --- ADD THIS SAFETY GUARD ---
+  if (!currentUser || !schoolId) {
+      console.warn("Waiting for user auth to load summary cards...");
+      return; 
+  }
+  // -----------------------------
+  
+  const summaryDiv=document.getElementById('summary-cards');
+  if(!summaryDiv) return; summaryDiv.innerHTML=''; showLoading();
+  // ... rest of your existing code ...
+
+
+
   try {
-    const teachersSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers'));
-    const teachersCount = teachersSnap.size;
-    let studentsCount = 0; let classesCount = 0; let totalAttendanceEntries = 0;
-    let presentCount = 0; let totalFeesCollected = 0; let totalFeesExpected = 0;
-    let totalScores = 0; let scoresCount = 0; let lowAttendanceClasses = 0;
+    const teachersSnap=await getDocs(collection(db,'schools',schoolId,'teachers'));
+    let studentsCount=0,classesCount=0,totalAttendance=0,presentCount=0;
+    let totalFeesCollected=0,totalFeesExpected=0,totalScores=0,scoresCount=0,lowAttClasses=0;
 
-    for (const teacherDoc of teachersSnap.docs) {
-      const classesSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'classes'));
-      classesCount += classesSnap.size;
-      const studentsSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'students'));
-      studentsCount += studentsSnap.size;
-
-      for (const classDoc of classesSnap.docs) {
-        const configRef = doc(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'feesConfig', classDoc.id);
-        const configSnap = await getDoc(configRef);
-        const classTotalFee = configSnap.exists() ? configSnap.data().totalFee || 0 : 0;
-
-        const classStudentsSnap = await getDocs(query(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'students'), where('classId', '==', classDoc.id)));
-        totalFeesExpected += classTotalFee * classStudentsSnap.size;
-
-        const feesQ = query(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'fees'), where('classId', '==', classDoc.id));
-        const feesSnap = await getDocs(feesQ);
-        feesSnap.forEach(feeDoc => {
-          const d = feeDoc.data();
-          if (Array.isArray(d.payments)) {
-            d.payments.forEach(p => totalFeesCollected += Number(p.amount) || 0);
-          } else if (d.amount) {
-            totalFeesCollected += Number(d.amount) || 0;
-          }
-        });
-
-        const attQ = query(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'attendanceHistory'), where('classId', '==', classDoc.id));
-        const attSnap = await getDocs(attQ);
-        let classPresent = 0; let classTotal = attSnap.size;
-        attSnap.forEach(att => { if (att.data().present) classPresent++; });
-        if (classTotal > 0 && (classPresent / classTotal * 100) < 60) lowAttendanceClasses++;
+    for(const teacherDoc of teachersSnap.docs){
+      const tid=teacherDoc.id; const td=teacherDoc.data();
+      // KEY FIX: Read class IDs from array field on teacher doc
+      const fromField=[...(td.assignedClasses||[]),...(td.classes||[])].map(c=>String(c).trim()).filter(Boolean);
+      const subSnap=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'classes'));
+      subSnap.forEach(d=>fromField.push(d.id));
+      const classIds=[...new Set(fromField)];
+      classesCount+=classIds.length;
+      const studSnap=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'students'));
+      studentsCount+=studSnap.size;
+      for(const classId of classIds){
+        const v=classIdVariants(classId);
+        const cs=await getDoc(doc(db,'schools',schoolId,'teachers',tid,'feesConfig',classId));
+        const cf=cs.exists()?cs.data().totalFee||0:0;
+        if(cf>0){
+          const csq=await getDocs(query(collection(db,'schools',schoolId,'teachers',tid,'students'),where('classId','in',v)));
+          totalFeesExpected+=cf*csq.size;
+        }
+        if(v.length>0){
+          const as=await getDocs(query(collection(db,'schools',schoolId,'teachers',tid,'attendanceHistory'),where('classId','in',v)));
+          let cp=0; as.forEach(a=>{if(a.data().present)cp++;});
+          if(as.size>0&&(cp/as.size*100)<60) lowAttClasses++;
+        }
       }
-
-      const attendanceSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'attendanceHistory'));
-      attendanceSnap.forEach(attDoc => { totalAttendanceEntries++; if (attDoc.data().present) presentCount++; });
-
-      const resultsSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers', teacherDoc.id, 'results'));
-      resultsSnap.forEach(resDoc => {
-        const scores = resDoc.data().scores || {};
-        Object.values(scores).forEach(score => { totalScores += score; scoresCount++; });
-      });
+      const att2=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'attendanceHistory'));
+      att2.forEach(a=>{totalAttendance++;if(a.data().present)presentCount++;});
+      const fs=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'fees'));
+      fs.forEach(f=>{const fd=f.data();if(Array.isArray(fd.payments))fd.payments.forEach(p=>totalFeesCollected+=Number(p.amount)||0);else if(fd.amount)totalFeesCollected+=Number(fd.amount)||0;});
+      const rs=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'results'));
+      rs.forEach(r=>{Object.values(r.data().scores||{}).forEach(s=>{totalScores+=s;scoresCount++;});});
     }
-
-    const attendancePct = totalAttendanceEntries > 0 ? ((presentCount / totalAttendanceEntries) * 100).toFixed(0) : 0;
-    const feesPct = totalFeesExpected > 0 ? ((totalFeesCollected / totalFeesExpected) * 100).toFixed(0) : 0;
-    const avgScore = scoresCount > 0 ? (totalScores / scoresCount).toFixed(0) : 0;
-    const avgGrade = getZambianGrade(avgScore);
-
-    summaryDiv.innerHTML = `
-      <div class="summary-card"><h3><i class="fas fa-chalkboard-teacher"></i> Teachers</h3><p>${teachersCount}</p></div>
-      <div class="summary-card"><h3><i class="fas fa-user-graduate"></i> Students</h3><p>${studentsCount}</p></div>
-      <div class="summary-card"><h3><i class="fas fa-layer-group"></i> Classes</h3><p>${classesCount}</p></div>
-      <div class="summary-card"><h3><i class="fas fa-calendar-check"></i> Attendance</h3><p>${attendancePct}%</p></div>
-      <div class="summary-card"><h3><i class="fas fa-coins"></i> Revenue</h3><p>${feesPct}%</p></div>
-      <div class="summary-card"><h3><i class="fas fa-graduation-cap"></i> Avg Grade</h3><p style="font-size:1.8rem;">${avgGrade.split(' ')[0]}</p></div>
-      <div class="summary-card"><h3><i class="fas fa-exclamation-triangle" style="color:var(--alert-red);"></i> Att. Risk</h3><p>${lowAttendanceClasses}</p></div>
-    `;
-  } catch (error) { console.error('Error loading summary:', error); } finally { hideLoading(); }
+    const attPct  =totalAttendance>0  ?((presentCount/totalAttendance)*100).toFixed(0)         :'0';
+    const feesPct =totalFeesExpected>0?((totalFeesCollected/totalFeesExpected)*100).toFixed(0)  :'0';
+    const avgScore=scoresCount>0      ?(totalScores/scoresCount).toFixed(0)                     :0;
+    const avgGrade=getZambianGrade(+avgScore);
+    [{icon:'🧑‍🏫',label:'Teachers',value:teachersSnap.size},{icon:'🎓',label:'Students',value:studentsCount},{icon:'📚',label:'Classes',value:classesCount},{icon:'📅',label:'Attendance',value:attPct+'%'},{icon:'💰',label:'Revenue Rate',value:feesPct+'%'},{icon:'📊',label:'Avg Grade',value:avgGrade.split(' ')[0],small:true},{icon:'⚠️',label:'Att. Risk',value:lowAttClasses}]
+    .forEach(c=>{summaryDiv.innerHTML+=`<div class="summary-card"><div class="sc-icon">${c.icon}</div><h3>${c.label}</h3><p class="${c.small?'small-val':''}">${c.value}</p></div>`;});
+  } catch(e){ console.error('Summary cards error:',e); } finally { hideLoading(); }
 }
 
-async function loadDashboardCharts() {
-  const chartDiv = document.getElementById('dashboard-charts');
-  chartDiv.innerHTML = '<canvas id="schoolTrendChart" style="max-height:300px;"></canvas>';
-  new Chart(document.getElementById('schoolTrendChart'), {
-    type: 'line',
-    data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'School Attendance %', data: [85, 90, 88, 92], borderColor: '#28a745', borderWidth: 3, tension: 0.4, fill: true, backgroundColor: 'rgba(40,167,69,0.1)' }] },
-    options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true, max: 100 } } }
-  });
+// ─── DASHBOARD CHART ─────────────────────
+async function loadDashboardCharts(){
+  const chartDiv=document.getElementById('dashboard-charts');
+  if(!chartDiv) return;
+  chartDiv.innerHTML=`<div style="font-size:1.1rem;color:var(--g800);margin-bottom:1rem;">School Attendance Trend</div><canvas id="schoolTrendChart" style="max-height:280px;"></canvas>`;
+  new Chart(document.getElementById('schoolTrendChart'),{type:'line',data:{labels:['Week 1','Week 2','Week 3','Week 4'],datasets:[{label:'School Attendance %',data:[85,90,88,92],borderColor:'#059669',borderWidth:3,tension:.4,fill:true,backgroundColor:'rgba(16,185,129,.08)',pointBackgroundColor:'#059669',pointRadius:5}]},options:{responsive:true,plugins:{legend:{display:true},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y}%`}}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},x:{grid:{display:false}}}}});
 }
 
-let computeAnalytics = function() {
-  let testAvgs = [];
-  let gradeCounts = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
-  let studentScores = new Map();
-  currentResultsData.forEach(result => {
-    const scoresObj = result.scores || {};
-    let sum = 0, cnt = 0;
-    Object.values(scoresObj).forEach(score => {
-      sum += score; cnt++;
-      const gNum = parseInt(getZambianGrade(score)) || 9;
-      if (gNum >=1 && gNum <=9) gradeCounts[gNum]++;
-    });
-    if (cnt > 0) {
-      const avg = (sum / cnt).toFixed(1);
-      testAvgs.push({test: `${result.subject} - ${result.testName}`, avg: parseFloat(avg)});
+// ─── UPDATES ──────────────────────────────
+
+
+async function checkForUpdates(){
+  // --- ADD THIS SAFETY GUARD ---
+  if (!currentUser || !schoolId) {
+      console.warn("Waiting for user auth to check updates...");
+      return; 
+  }
+  // -----------------------------
+  
+  recentUpdates=[];
+  try {
+    const headRef=doc(db,'schools',schoolId,'headteachers',currentUser.uid);
+  // ... rest of your existing code ...
+
+
+    const headSnap=await getDoc(headRef);
+    const headData=headSnap.exists()?headSnap.data():{};
+    const lastViewed=headData.lastViewedUpdates?new Date(headData.lastViewedUpdates):new Date(0);
+    let lkc=headData.lastKnownStudentCounts||{};
+    const teachersSnap=await getDocs(collection(db,'schools',schoolId,'teachers'));
+    for(const teacherDoc of teachersSnap.docs){
+      const tid=teacherDoc.id; const td=teacherDoc.data();
+      const teacherName=td.name||'Unknown Teacher';
+      // KEY FIX: Use array field for class IDs
+      const classIds=[...new Set([...(td.assignedClasses||[]),...(td.classes||[])].map(c=>String(c).trim()).filter(Boolean))];
+      for(const classId of classIds){
+        const v=classIdVariants(classId);
+        const className=classId.replace(/_/g,' ');
+        const q=query(collection(db,'schools',schoolId,'teachers',tid,'students'),where('classId','in',v));
+        const ss=await getDocs(q);
+        const current=ss.size; const key=`${tid}_${classId}`; const previous=lkc[key]||0;
+        if(current>previous){ recentUpdates.push({type:'students',icon:'👨‍🎓',teacher:teacherName,message:`Added ${current-previous} new student(s) in <strong>${className}</strong>. Total: <strong>${current}</strong>`,timestamp:Date.now(),time:new Date().toLocaleString()}); lkc[key]=current; }
+      }
+      for(const ht of [{coll:'attendanceHistory',name:'attendance records',icon:'📅'},{coll:'fees',name:'fee payments',icon:'💰'},{coll:'results',name:'test results',icon:'📊'}]){
+        const hs=await getDocs(collection(db,'schools',schoolId,'teachers',tid,ht.coll));
+        let nc=0,lt=null;
+        hs.forEach(d=>{const data=d.data();if(data.syncedAt){const t=parseFirestoreDate(data.syncedAt);if(t>lastViewed){nc++;if(!lt||t>lt)lt=t;}}});
+        if(nc>0) recentUpdates.push({type:ht.coll,icon:ht.icon,teacher:teacherName,message:`Synced ${nc} new ${ht.name}.`,timestamp:lt?lt.getTime():Date.now(),time:lt?lt.toLocaleString():new Date().toLocaleString()});
+      }
     }
-    Object.entries(scoresObj).forEach(([studId, score]) => {
-      let entry = studentScores.get(studId) || {total:0, count:0};
-      entry.total += score; entry.count++;
-      studentScores.set(studId, entry);
-    });
+    recentUpdates.sort((a,b)=>b.timestamp-a.timestamp);
+    await updateDoc(headRef,{lastKnownStudentCounts:lkc},{merge:true});
+    const badge=document.getElementById('updates-badge');
+    if(badge){badge.textContent=recentUpdates.length;badge.style.display=recentUpdates.length>0?'inline':'none';}
+    if(recentUpdates.length>0) showUpdatesModal();
+  } catch(e){ console.error('Updates check:',e); }
+}
+function showUpdatesModal(){
+  const modal=document.getElementById('updates-modal'); const list=document.getElementById('updates-list');
+  if(!modal||!list) return; list.innerHTML='';
+  const ce=document.getElementById('updates-count'); if(ce) ce.textContent=`(${recentUpdates.length})`;
+  recentUpdates.forEach(up=>{
+    const card=document.createElement('div'); card.className='update-card';
+    card.innerHTML=`<div class="update-icon">${up.icon}</div><div style="flex:1;"><span class="update-teacher-badge"><i class="fas fa-chalkboard-teacher"></i> ${up.teacher}</span><p style="font-size:.95rem;color:var(--ink);">${up.message}</p><span class="update-time"><i class="far fa-clock"></i> ${up.time}</span></div>`;
+    list.appendChild(card);
   });
-  const studentAvgs = Array.from(studentScores, ([id, data]) => ({
-    id, avg: data.count ? (data.total / data.count).toFixed(1) : 0
-  })).sort((a,b) => b.avg - a.avg);
-  return { testAvgs, gradeCounts, studentAvgs };
+  modal.style.display='flex';
+}
+window.closeUpdatesModal=function(){ const m=document.getElementById('updates-modal'); if(m) m.style.display='none'; };
+window.markAllRead=async function(){
+  showLoading();
+  try {
+    await updateDoc(doc(db,'schools',schoolId,'headteachers',currentUser.uid),{lastViewedUpdates:new Date().toISOString()},{merge:true});
+    recentUpdates=[]; const badge=document.getElementById('updates-badge'); if(badge) badge.style.display='none';
+    window.closeUpdatesModal();
+  } catch(e){ alert('Could not mark as read.'); } finally { hideLoading(); }
 };
+document.getElementById('updates-btn')?.addEventListener('click',()=>{ if(recentUpdates.length>0) showUpdatesModal(); });
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  if(document.getElementById('updates-modal')?.style.display==='flex')  window.closeUpdatesModal();
+  if(document.getElementById('analytics-modal')?.style.display==='flex') window.closeAnalyticsModal();
+});
 
-window.showAnalyticsModal = function() {
-  if (currentResultsData.length === 0) return alert("No results data available yet to analyze.");
-  const modal = document.getElementById('analytics-modal');
-  modal.style.display = 'flex';
-  const { testAvgs, gradeCounts, studentAvgs } = computeAnalytics();
-  renderBarChart(testAvgs);
-  renderPieChart(gradeCounts);
-  const topDiv = document.getElementById('top-students');
-  topDiv.innerHTML = `<h3 style="border-bottom:2px solid #f1f1f1; padding-bottom:10px; margin-bottom:15px; color:var(--accent);"><i class="fas fa-award"></i> Honors Board (Top Performers)</h3><ul style="columns:2; font-size:1.1rem; list-style:none; padding:0;">`;
-  studentAvgs.slice(0,8).forEach((s, i) => {
-    let medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🔹';
-    topDiv.innerHTML += `<li style="margin-bottom:10px; background:#f8f9fa; padding:10px; border-radius:8px;">${medal} <strong>${s.id}</strong> <br><span style="color:#6c757d; font-size:0.9rem;">Avg: ${s.avg}% | Grade: ${getZambianGrade(parseFloat(s.avg)).split(' ')[0]}</span></li>`;
+// ─── ANALYTICS ────────────────────────────
+function computeAnalytics(){
+  let testAvgs=[],gradeCounts={1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
+  let studentScores=new Map();
+  currentResultsData.forEach(result=>{
+    const so=result.scores||{}; let sum=0,cnt=0;
+    Object.values(so).forEach(score=>{sum+=score;cnt++;const g=parseInt(getZambianGrade(score))||9;if(g>=1&&g<=9)gradeCounts[g]++;});
+    if(cnt>0) testAvgs.push({test:`${result.subject} - ${result.testName}`,avg:parseFloat((sum/cnt).toFixed(1))});
+    Object.entries(so).forEach(([id,score])=>{let e=studentScores.get(id)||{total:0,count:0};e.total+=score;e.count++;studentScores.set(id,e);});
   });
-  topDiv.innerHTML += `</ul>`;
+  const studentAvgs=Array.from(studentScores,([id,d])=>({id,avg:d.count?(d.total/d.count).toFixed(1):0})).sort((a,b)=>b.avg-a.avg);
+  return {testAvgs,gradeCounts,studentAvgs};
+}
+window.showAnalyticsModal=function(){
+  if(!currentResultsData.length) return alert('No results data available yet.');
+  const modal=document.getElementById('analytics-modal'); if(!modal) return;
+  modal.style.display='flex';
+  const {testAvgs,gradeCounts,studentAvgs}=computeAnalytics();
+  renderBarChart(testAvgs); renderPieChart(gradeCounts);
+  const topDiv=document.getElementById('top-students'); if(!topDiv) return;
+  topDiv.innerHTML=`<h3 style="font-size:1.3rem;border-bottom:2px solid var(--wire);padding-bottom:.75rem;margin-bottom:1rem;color:var(--g700);"><i class="fas fa-award"></i> Honors Board — Top Performers</h3><ul style="columns:2;font-size:1rem;list-style:none;padding:0;">`;
+  studentAvgs.slice(0,8).forEach((s,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'🔹';
+    topDiv.innerHTML+=`<li style="margin-bottom:10px;background:var(--g50);padding:10px 12px;border-radius:8px;border:1px solid var(--wire);">${medal} <strong>${s.id}</strong><br><span style="color:var(--muted);font-size:.82rem;">Avg: ${s.avg}% | Grade: ${getZambianGrade(parseFloat(s.avg)).split(' ')[0]}</span></li>`;
+  });
+  topDiv.innerHTML+='</ul>';
 };
+window.closeAnalyticsModal=function(){ const m=document.getElementById('analytics-modal'); if(m) m.style.display='none'; };
 
-window.closeAnalyticsModal = function() {
-  document.getElementById('analytics-modal').style.display = 'none';
-};
-
-function renderBarChart(data) {
-  const svg = d3.select("#bar-chart");
-  svg.selectAll("*").remove();
-  const width = 450, height = 350, margin = {top:20, right:30, bottom:90, left:50};
-  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-  const x = d3.scaleBand().domain(data.map(d => d.test)).range([0, width - margin.left - margin.right]).padding(0.3);
-  const y = d3.scaleLinear().domain([0, d3.max(data, d => d.avg) * 1.1 || 100]).nice().range([height - margin.top - margin.bottom, 0]);
-  g.append("g").attr("transform", `translate(0,${height - margin.top - margin.bottom})`).call(d3.axisBottom(x)).selectAll("text").attr("transform", "rotate(-35)").style("text-anchor", "end").style("font-size", "11px");
-  g.append("g").call(d3.axisLeft(y));
-  g.selectAll("rect").data(data).enter().append("rect")
-    .attr("x", d => x(d.test)).attr("y", d => y(d.avg))
-    .attr("width", x.bandwidth()).attr("height", d => height - margin.top - margin.bottom - y(d.avg))
-    .attr("fill", "#0d6efd").attr("rx", 4);
-  g.selectAll("text.label").data(data).enter().append("text")
-    .attr("x", d => x(d.test) + x.bandwidth()/2).attr("y", d => y(d.avg) - 8)
-    .attr("text-anchor", "middle").attr("fill", "#343a40").style("font-weight", "bold").style("font-size", "12px").text(d => d.avg + '%');
+function renderBarChart(data){
+  const svg=d3.select('#bar-chart'); svg.selectAll('*').remove();
+  const w=450,h=350,m={top:20,right:30,bottom:90,left:50};
+  const g=svg.append('g').attr('transform',`translate(${m.left},${m.top})`);
+  const x=d3.scaleBand().domain(data.map(d=>d.test)).range([0,w-m.left-m.right]).padding(.3);
+  const y=d3.scaleLinear().domain([0,(d3.max(data,d=>d.avg)||100)*1.1]).nice().range([h-m.top-m.bottom,0]);
+  g.append('g').attr('transform',`translate(0,${h-m.top-m.bottom})`).call(d3.axisBottom(x)).selectAll('text').attr('transform','rotate(-35)').style('text-anchor','end').style('font-size','11px');
+  g.append('g').call(d3.axisLeft(y));
+  g.selectAll('rect').data(data).enter().append('rect').attr('x',d=>x(d.test)).attr('y',d=>y(d.avg)).attr('width',x.bandwidth()).attr('height',d=>h-m.top-m.bottom-y(d.avg)).attr('fill','#059669').attr('rx',4);
+  g.selectAll('text.label').data(data).enter().append('text').attr('x',d=>x(d.test)+x.bandwidth()/2).attr('y',d=>y(d.avg)-8).attr('text-anchor','middle').attr('fill','#0d1f15').style('font-weight','bold').style('font-size','12px').text(d=>d.avg+'%');
+}
+function renderPieChart(gradeCounts){
+  const svg=d3.select('#pie-chart'); svg.selectAll('*').remove();
+  const w=350,h=350,r=Math.min(w,h)/2-30;
+  const g=svg.append('g').attr('transform',`translate(${w/2},${h/2})`);
+  const data=Object.keys(gradeCounts).filter(k=>gradeCounts[k]>0).map(k=>({grade:`${getZambianGrade(parseInt(k)).split(' ')[0]}`,value:gradeCounts[k]}));
+  const pie=d3.pie().value(d=>d.value); const arc=d3.arc().innerRadius(50).outerRadius(r);
+  const color=d3.scaleOrdinal().range(['#059669','#0d9488','#0284c7','#7c3aed','#dc2626','#ea580c','#65a30d']);
+  const arcs=g.selectAll('arc').data(pie(data)).enter().append('g');
+  arcs.append('path').attr('d',arc).attr('fill',(d,i)=>color(i)).attr('stroke','white').attr('stroke-width','2px');
+  arcs.append('text').attr('transform',d=>`translate(${arc.centroid(d)})`).attr('text-anchor','middle').style('font-size','12px').style('font-weight','bold').style('fill','#fff').text(d=>d.data.grade);
+}
+function exportResultsToPDF(){
+  if(!currentResultsData.length) return alert('No results to export.');
+  const {jsPDF}=window.jspdf; const pdfDoc=new jsPDF();
+  const {testAvgs,studentAvgs}=computeAnalytics();
+  pdfDoc.setFontSize(22); pdfDoc.setTextColor(5,150,105); pdfDoc.text('Official Academic Report',20,20);
+  pdfDoc.setFontSize(12); pdfDoc.setTextColor(100,100,100); pdfDoc.text(`Generated: ${new Date().toLocaleDateString()} | Class: ${selectedClassId}`,20,30);
+  pdfDoc.setTextColor(0,0,0); pdfDoc.setFontSize(14); let y=45;
+  pdfDoc.text('Subject Averages:',20,y); y+=10; pdfDoc.setFontSize(12);
+  testAvgs.forEach(t=>{pdfDoc.text(`• ${t.test}: ${t.avg}%`,30,y);y+=8;});
+  y+=10; pdfDoc.setFontSize(14); pdfDoc.text('Honors Board (Top Students):',20,y); y+=10; pdfDoc.setFontSize(12);
+  studentAvgs.slice(0,8).forEach(s=>{pdfDoc.text(`• ${s.id} – Score: ${s.avg}% | Grade: ${getZambianGrade(parseFloat(s.avg))}`,30,y);y+=8;if(y>260){pdfDoc.addPage();y=20;}});
+  pdfDoc.setFontSize(10); pdfDoc.setTextColor(150,150,150); pdfDoc.text('Generated automatically by TeachMate 3.0.',20,280);
+  pdfDoc.save(`TeachMate_Academic_Report_${selectedClassId||'export'}.pdf`);
 }
 
-function renderPieChart(gradeCounts) {
-  const svg = d3.select("#pie-chart");
-  svg.selectAll("*").remove();
-  const width = 350, height = 350, radius = Math.min(width, height) / 2 - 30;
-  const g = svg.append("g").attr("transform", `translate(${width/2},${height/2})`);
-  const data = Object.keys(gradeCounts).filter(k => gradeCounts[k] > 0).map(k => ({
-    grade: `${getZambianGrade(parseInt(k)).split(' ')[0]}`,
-    value: gradeCounts[k]
-  }));
-  const pie = d3.pie().value(d => d.value);
-  const arc = d3.arc().innerRadius(50).outerRadius(radius); // Made it a donut chart for a modern look
-  const color = d3.scaleOrdinal().range(["#28a745","#17a2b8","#ffc107","#fd7e14","#dc3545","#6c757d","#343a40"]);
-  const arcs = g.selectAll("arc").data(pie(data)).enter().append("g");
-  arcs.append("path").attr("d", arc).attr("fill", (d,i) => color(i)).attr("stroke", "white").attr("stroke-width", "2px");
-  arcs.append("text").attr("transform", d => `translate(${arc.centroid(d)})`)
-    .attr("text-anchor", "middle").style("font-size","12px").style("font-weight","bold").style("fill","#fff").text(d => d.data.grade);
-}
 
-function exportResultsToPDF() {
-  if (currentResultsData.length === 0) return alert("No results to export.");
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const { testAvgs, studentAvgs } = computeAnalytics();
-  doc.setFontSize(22);
-  doc.setTextColor(40, 167, 69);
-  doc.text(`Official Academic Report`, 20, 20);
-  doc.setFontSize(12);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()} | Class ID: ${selectedClassId}`, 20, 30);
+
+// ─── INIT AUTHENTICATION ─────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    currentUser = { uid: null, role: null, name: null, email: null };
+    document.getElementById('logout-btn').style.display = 'none';
+    document.querySelector('.sidebar').style.display = 'none';
+    showSection('auth-section');
+    return;
+  }
   
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(14);
-  let y = 45;
-  doc.text("Subject Averages:", 20, y); y += 10;
-  doc.setFontSize(12);
-  testAvgs.forEach(t => { doc.text(`• ${t.test}: ${t.avg}%`, 30, y); y += 8; });
-  y += 10;
-  
-  doc.setFontSize(14);
-  doc.text("Honors Board (Top Students):", 20, y); y += 10;
-  doc.setFontSize(12);
-  studentAvgs.slice(0,8).forEach(s => {
-    doc.text(`• ${s.id} – Score: ${s.avg}% | Grade: ${getZambianGrade(parseFloat(s.avg))}`, 30, y); y += 8;
-    if (y > 260) { doc.addPage(); y = 20; }
-  });
-  doc.setFontSize(10);
-  doc.setTextColor(150, 150, 150);
-  doc.text("Document generated automatically by TeachMate 3.0 Systems.", 20, 280);
-  doc.save(`TeachMate_Academic_Report_${selectedClassId || 'export'}.pdf`);
-}
+  showLoading();
+  try {
+    // Step 1: Get schoolId from users/{uid} — this is the missing piece
+    const userSnap = await getDoc(doc(db, 'users', user.uid));
+    if (!userSnap.exists()) {
+      console.warn('No user doc found — sending to auth.');
+      await signOut(auth);
+      showSection('auth-section');
+      return;
+    }
+    
+    const userData = userSnap.data();
+    
+    if (userData.role !== 'headteacher') {
+      alert('Access denied: Not a Headteacher account.');
+      await signOut(auth);
+      showSection('auth-section');
+      return;
+    }
+    
+    // Step 2: Now schoolId is known — safe to read headteacher profile
+    schoolId = userData.schoolId;
+    
+    if (!schoolId || schoolId === 'pending') {
+      // Registration race condition — doc written but schoolId not yet updated
+      console.warn('schoolId is pending — waiting is not ideal, logging out.');
+      await signOut(auth);
+      alert('Your account setup is incomplete. Please register again or contact support.');
+      showSection('auth-section');
+      return;
+    }
+    
+    const headSnap = await getDoc(doc(db, 'schools', schoolId, 'headteachers', user.uid));
+    if (!headSnap.exists()) {
+      console.warn('Headteacher profile doc missing.');
+      await signOut(auth);
+      showSection('auth-section');
+      return;
+    }
+    
+    const headData = headSnap.data();
+    const schoolDoc = await getDoc(doc(db, 'schools', schoolId));
+    const schoolData = schoolDoc.exists() ? schoolDoc.data() : {};
+    
+    // Step 3: Restore all globals that login normally sets
+    currentUser = {
+      uid: user.uid,
+      role: 'headteacher',
+      name: headData.name || user.email,
+      email: headData.email || user.email,
+    };
+    schoolName = schoolData.name || '';
+    schoolCode = schoolData.schoolCode || '';
+    
+    // Step 4: All globals ready — safe to show dashboard
+    showDashboard();
+    
+  } catch (err) {
+    console.error('onAuthStateChanged error:', err);
+    showSection('auth-section');
+  } finally {
+    hideLoading();
+  }
+});
 
-showSection('auth-section');
+
+
 </script>
 </body>
 </html>
