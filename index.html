@@ -324,6 +324,10 @@ let recentUpdates      = [];
 let teacherListeners   = [];
 let bulkSelection      = new Set();
 
+
+// Add this with your other module-level variables
+let _registrationInProgress = false;
+
 // ═══════════════════════════════════════
 // KEY FIX 1: classIdVariants
 // Original code used .replace() which only
@@ -402,6 +406,8 @@ document.getElementById('forgot-password-btn').addEventListener('click', async (
   catch(e) { alert(`Error: ${e.message}`); } finally { hideLoading(); }
 });
 
+
+
 // ─── REGISTER ───────────────────────────
 document.getElementById('register-btn').addEventListener('click', async () => {
   showLoading();
@@ -411,41 +417,88 @@ document.getElementById('register-btn').addEventListener('click', async () => {
   const password        = document.getElementById('password').value;
   const schoolNameInput = document.getElementById('school-name').value.trim();
   let   schoolCodeInput = document.getElementById('school-code').value.trim().toUpperCase();
+
   if (!name||!tsNumber||!email||!password||!schoolNameInput) {
     alert('Please fill all required fields.'); hideLoading(); return;
   }
+
+  // ── Lock the observer BEFORE creating the auth user ──
+  _registrationInProgress = true;
+
   let firebaseAuthUser = null;
   try {
     const uc = await createUserWithEmailAndPassword(auth, email, password);
     firebaseAuthUser = uc.user;
     const uid = firebaseAuthUser.uid;
+
     if (!schoolCodeInput) {
       schoolCodeInput = await generateUniqueSchoolCode();
     } else {
       const ex = await getDocs(query(collection(db,'schools'),where('schoolCode','==',schoolCodeInput)));
-      if (!ex.empty) { await firebaseAuthUser.delete(); alert(`Code "${schoolCodeInput}" already taken.`); hideLoading(); return; }
+      if (!ex.empty) {
+        await firebaseAuthUser.delete();
+        alert(`Code "${schoolCodeInput}" already taken.`);
+        hideLoading();
+        _registrationInProgress = false;
+        return;
+      }
     }
-    await setDoc(doc(db,'users',uid),{schoolId:'pending',role:'headteacher',accountStatus:'active',approved:true,email});
+
+    // Write user doc FIRST before anything else
+    await setDoc(doc(db,'users',uid), {
+      schoolId: 'pending',
+      role: 'headteacher',
+      accountStatus: 'active',
+      approved: true,
+      email
+    });
+
     const sq = query(collection(db,'schools'),where('name','==',schoolNameInput));
     const ss = await getDocs(sq);
     if (ss.empty) {
-      const sr = await addDoc(collection(db,'schools'),{name:schoolNameInput,schoolCode:schoolCodeInput,status:'expired',expiryDate:null,address:'',phone:'',email:'',lastUpdated:serverTimestamp(),createdAt:serverTimestamp()});
+      const sr = await addDoc(collection(db,'schools'),{
+        name: schoolNameInput,
+        schoolCode: schoolCodeInput,
+        status: 'expired',
+        expiryDate: null,
+        address: '',
+        phone: '',
+        email: '',
+        lastUpdated: serverTimestamp(),
+        createdAt: serverTimestamp()
+      });
       schoolId = sr.id;
     } else {
       schoolId = ss.docs[0].id;
       await updateDoc(doc(db,'schools',schoolId),{schoolCode:schoolCodeInput});
     }
+
+    // Update schoolId now that we have it
     await updateDoc(doc(db,'users',uid),{schoolId});
-    await setDoc(doc(db,'schools',schoolId,'headteachers',uid),{name,tsNumber,email,createdAt:serverTimestamp()});
-    currentUser = {uid,role:'headteacher',name,email};
+
+    await setDoc(doc(db,'schools',schoolId,'headteachers',uid),{
+      name, tsNumber, email, createdAt: serverTimestamp()
+    });
+
+    // All writes done — set globals
+    currentUser = {uid, role:'headteacher', name, email};
     schoolName  = schoolNameInput;
     schoolCode  = schoolCodeInput;
+
+    // Release lock THEN show dashboard
+    _registrationInProgress = false;
     showDashboard();
+
   } catch(e) {
+    _registrationInProgress = false;
     if (firebaseAuthUser) { try { await firebaseAuthUser.delete(); } catch(_){} }
     alert(`Registration error: ${e.message}`);
-  } finally { hideLoading(); }
+  } finally {
+    hideLoading();
+  }
 });
+
+
 
 // ─── LOGIN ───────────────────────────────
 document.getElementById('login-btn').addEventListener('click', async () => {
@@ -866,18 +919,43 @@ function getZambianGrade(score){
 // number 1, string "1", or "Term 1". Now we query
 // without term filter and filter in JS flexibly.
 // ═══════════════════════════════════════
+
 window.loadSectionData = async function(section) {
-  document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
-  const at=Array.from(document.querySelectorAll('.section-tab')).find(t=>t.getAttribute('onclick')?.includes(`'${section}'`));
-  if(at) at.classList.add('active');
-  showLoading();
-  const content=document.getElementById('data-content');
-  content.innerHTML='';
-  const alertsDiv=document.getElementById('alerts-section');
-  if(alertsDiv) alertsDiv.innerHTML='';
+      document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+      const at = Array.from(document.querySelectorAll('.section-tab')).find(t => t.getAttribute('onclick')?.includes(`'${section}'`));
+      if (at) at.classList.add('active');
+      
+      // ── FIX: Guard against missing classId ──────────────────────────────
+      if (!selectedClassId) {
+        const content = document.getElementById('data-content');
+        if (content) content.innerHTML = `<p class="empty-state"><i class="fas fa-exclamation-circle"></i> No class selected. Please go back and select a class first.</p>`;
+        return;
+      }
+      
+      const variants = classIdVariants(selectedClassId);
+      
+      // ── FIX: Guard against empty variants (Firestore 'in' query requires at least 1 value) ──
+      if (!variants.length) {
+        const content = document.getElementById('data-content');
+        if (content) content.innerHTML = `<p class="empty-state"><i class="fas fa-exclamation-circle"></i> Invalid class ID. Please go back and re-select the class.</p>`;
+        return;
+      }
+      
+      showLoading();
+      const content = document.getElementById('data-content');
+      content.innerHTML = '';
+      const alertsDiv = document.getElementById('alerts-section');
+      if (alertsDiv) alertsDiv.innerHTML = '';
+      
+      console.log('[HT Dashboard] Querying classId variants:', variants);
+      
+      // ... rest of your existing loadSectionData code unchanged
+
+
+  
 
   // KEY FIX: Use classIdVariants() for all queries
-  const variants = classIdVariants(selectedClassId);
+  
   console.log('[HT Dashboard] Querying classId variants:',variants);
 
   try {
@@ -1149,62 +1227,106 @@ document.getElementById('save-settings-btn').addEventListener('click', async()=>
 
 
 async function loadSummaryCards(){
-  // --- ADD THIS SAFETY GUARD ---
   if (!currentUser || !schoolId) {
-      console.warn("Waiting for user auth to load summary cards...");
-      return; 
+    console.warn("Waiting for user auth to load summary cards...");
+    return;
   }
-  // -----------------------------
-  
-  const summaryDiv=document.getElementById('summary-cards');
-  if(!summaryDiv) return; summaryDiv.innerHTML=''; showLoading();
-  // ... rest of your existing code ...
 
-
+  const summaryDiv = document.getElementById('summary-cards');
+  if (!summaryDiv) return;
+  summaryDiv.innerHTML = '';
+  showLoading();
 
   try {
-    const teachersSnap=await getDocs(collection(db,'schools',schoolId,'teachers'));
-    let studentsCount=0,classesCount=0,totalAttendance=0,presentCount=0;
-    let totalFeesCollected=0,totalFeesExpected=0,totalScores=0,scoresCount=0,lowAttClasses=0;
+    const teachersSnap = await getDocs(collection(db,'schools',schoolId,'teachers'));
+    let classesCount=0, totalAttendance=0, presentCount=0;
+    let totalFeesCollected=0, totalFeesExpected=0, totalScores=0, scoresCount=0, lowAttClasses=0;
 
     for(const teacherDoc of teachersSnap.docs){
-      const tid=teacherDoc.id; const td=teacherDoc.data();
-      // KEY FIX: Read class IDs from array field on teacher doc
-      const fromField=[...(td.assignedClasses||[]),...(td.classes||[])].map(c=>String(c).trim()).filter(Boolean);
-      const subSnap=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'classes'));
-      subSnap.forEach(d=>fromField.push(d.id));
-      const classIds=[...new Set(fromField)];
-      classesCount+=classIds.length;
-      const studSnap=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'students'));
-      studentsCount+=studSnap.size;
+      const tid = teacherDoc.id;
+      const td  = teacherDoc.data();
+
+      const fromField = [...(td.assignedClasses||[]),...(td.classes||[])]
+        .map(c=>String(c).trim()).filter(Boolean);
+      const subSnap = await getDocs(collection(db,'schools',schoolId,'teachers',tid,'classes'));
+      subSnap.forEach(d => fromField.push(d.id));
+      const classIds = [...new Set(fromField)];
+      classesCount += classIds.length;
+
+      // ── FIX: Removed wrong-path students read from here ──
+      // studentsCount is now counted from the correct path after this loop
+
       for(const classId of classIds){
-        const v=classIdVariants(classId);
-        const cs=await getDoc(doc(db,'schools',schoolId,'teachers',tid,'feesConfig',classId));
-        const cf=cs.exists()?cs.data().totalFee||0:0;
-        if(cf>0){
-          const csq=await getDocs(query(collection(db,'schools',schoolId,'teachers',tid,'students'),where('classId','in',v)));
-          totalFeesExpected+=cf*csq.size;
+        const v = classIdVariants(classId);
+        if(!v.length) continue; // ── FIX: Skip empty variants — Firestore 'in' rejects []
+
+        const cs = await getDoc(doc(db,'schools',schoolId,'teachers',tid,'feesConfig',classId));
+        const cf = cs.exists() ? cs.data().totalFee||0 : 0;
+        if(cf > 0){
+          // ── FIX: Count students from correct school-level path
+          const csq = await getDocs(query(
+            collection(db,'schools',schoolId,'students'),
+            where('classId','in',v)
+          ));
+          totalFeesExpected += cf * csq.size;
         }
-        if(v.length>0){
-          const as=await getDocs(query(collection(db,'schools',schoolId,'teachers',tid,'attendanceHistory'),where('classId','in',v)));
-          let cp=0; as.forEach(a=>{if(a.data().present)cp++;});
-          if(as.size>0&&(cp/as.size*100)<60) lowAttClasses++;
-        }
+
+        const as = await getDocs(query(
+          collection(db,'schools',schoolId,'teachers',tid,'attendanceHistory'),
+          where('classId','in',v)
+        ));
+        let cp = 0;
+        as.forEach(a => { if(a.data().present) cp++; });
+        if(as.size > 0 && (cp/as.size*100) < 60) lowAttClasses++;
       }
-      const att2=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'attendanceHistory'));
-      att2.forEach(a=>{totalAttendance++;if(a.data().present)presentCount++;});
-      const fs=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'fees'));
-      fs.forEach(f=>{const fd=f.data();if(Array.isArray(fd.payments))fd.payments.forEach(p=>totalFeesCollected+=Number(p.amount)||0);else if(fd.amount)totalFeesCollected+=Number(fd.amount)||0;});
-      const rs=await getDocs(collection(db,'schools',schoolId,'teachers',tid,'results'));
-      rs.forEach(r=>{Object.values(r.data().scores||{}).forEach(s=>{totalScores+=s;scoresCount++;});});
+
+      const att2 = await getDocs(collection(db,'schools',schoolId,'teachers',tid,'attendanceHistory'));
+      att2.forEach(a => { totalAttendance++; if(a.data().present) presentCount++; });
+
+      const fs = await getDocs(collection(db,'schools',schoolId,'teachers',tid,'fees'));
+      fs.forEach(f => {
+        const fd = f.data();
+        if(Array.isArray(fd.payments)) fd.payments.forEach(p => totalFeesCollected += Number(p.amount)||0);
+        else if(fd.amount) totalFeesCollected += Number(fd.amount)||0;
+      });
+
+      const rs = await getDocs(collection(db,'schools',schoolId,'teachers',tid,'results'));
+      rs.forEach(r => {
+        Object.values(r.data().scores||{}).forEach(s => { totalScores += s; scoresCount++; });
+      });
     }
-    const attPct  =totalAttendance>0  ?((presentCount/totalAttendance)*100).toFixed(0)         :'0';
-    const feesPct =totalFeesExpected>0?((totalFeesCollected/totalFeesExpected)*100).toFixed(0)  :'0';
-    const avgScore=scoresCount>0      ?(totalScores/scoresCount).toFixed(0)                     :0;
-    const avgGrade=getZambianGrade(+avgScore);
-    [{icon:'🧑‍🏫',label:'Teachers',value:teachersSnap.size},{icon:'🎓',label:'Students',value:studentsCount},{icon:'📚',label:'Classes',value:classesCount},{icon:'📅',label:'Attendance',value:attPct+'%'},{icon:'💰',label:'Revenue Rate',value:feesPct+'%'},{icon:'📊',label:'Avg Grade',value:avgGrade.split(' ')[0],small:true},{icon:'⚠️',label:'Att. Risk',value:lowAttClasses}]
-    .forEach(c=>{summaryDiv.innerHTML+=`<div class="summary-card"><div class="sc-icon">${c.icon}</div><h3>${c.label}</h3><p class="${c.small?'small-val':''}">${c.value}</p></div>`;});
-  } catch(e){ console.error('Summary cards error:',e); } finally { hideLoading(); }
+
+    // ── FIX: Count students from correct school-level collection ──
+    const allStudentsSnap = await getDocs(collection(db,'schools',schoolId,'students'));
+    const studentsCount = allStudentsSnap.size;
+
+    const attPct   = totalAttendance   > 0 ? ((presentCount/totalAttendance)*100).toFixed(0)         : '0';
+    const feesPct  = totalFeesExpected > 0 ? ((totalFeesCollected/totalFeesExpected)*100).toFixed(0) : '0';
+    const avgScore = scoresCount       > 0 ? (totalScores/scoresCount).toFixed(0)                    : 0;
+    const avgGrade = getZambianGrade(+avgScore);
+
+    [
+      {icon:'🧑‍🏫', label:'Teachers',     value:teachersSnap.size},
+      {icon:'🎓',   label:'Students',     value:studentsCount},
+      {icon:'📚',   label:'Classes',      value:classesCount},
+      {icon:'📅',   label:'Attendance',   value:attPct+'%'},
+      {icon:'💰',   label:'Revenue Rate', value:feesPct+'%'},
+      {icon:'📊',   label:'Avg Grade',    value:avgGrade.split(' ')[0], small:true},
+      {icon:'⚠️',  label:'Att. Risk',    value:lowAttClasses}
+    ].forEach(c => {
+      summaryDiv.innerHTML += `
+        <div class="summary-card">
+          <div class="sc-icon">${c.icon}</div>
+          <h3>${c.label}</h3>
+          <p class="${c.small?'small-val':''}">${c.value}</p>
+        </div>`;
+    });
+
+  } catch(e) {
+    console.error('Summary cards error:', e);
+  } finally {
+    hideLoading();
+  }
 }
 
 // ─── DASHBOARD CHART ─────────────────────
@@ -1361,6 +1483,11 @@ function exportResultsToPDF(){
 
 // ─── INIT AUTHENTICATION ─────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
+  // ── KEY FIX: If registration is in progress, do nothing.
+  // The register handler will call showDashboard() itself
+  // once all Firestore writes are complete.
+  if (_registrationInProgress) return;
+  
   if (!user) {
     currentUser = { uid: null, role: null, name: null, email: null };
     document.getElementById('logout-btn').style.display = 'none';
@@ -1371,7 +1498,6 @@ onAuthStateChanged(auth, async (user) => {
   
   showLoading();
   try {
-    // Step 1: Get schoolId from users/{uid} — this is the missing piece
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (!userSnap.exists()) {
       console.warn('No user doc found — sending to auth.');
@@ -1389,12 +1515,10 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
     
-    // Step 2: Now schoolId is known — safe to read headteacher profile
     schoolId = userData.schoolId;
     
     if (!schoolId || schoolId === 'pending') {
-      // Registration race condition — doc written but schoolId not yet updated
-      console.warn('schoolId is pending — waiting is not ideal, logging out.');
+      console.warn('schoolId is pending — logging out.');
       await signOut(auth);
       alert('Your account setup is incomplete. Please register again or contact support.');
       showSection('auth-section');
@@ -1413,7 +1537,6 @@ onAuthStateChanged(auth, async (user) => {
     const schoolDoc = await getDoc(doc(db, 'schools', schoolId));
     const schoolData = schoolDoc.exists() ? schoolDoc.data() : {};
     
-    // Step 3: Restore all globals that login normally sets
     currentUser = {
       uid: user.uid,
       role: 'headteacher',
@@ -1423,7 +1546,6 @@ onAuthStateChanged(auth, async (user) => {
     schoolName = schoolData.name || '';
     schoolCode = schoolData.schoolCode || '';
     
-    // Step 4: All globals ready — safe to show dashboard
     showDashboard();
     
   } catch (err) {
@@ -1433,8 +1555,6 @@ onAuthStateChanged(auth, async (user) => {
     hideLoading();
   }
 });
-
-
 
 </script>
 </body>
