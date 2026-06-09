@@ -149,6 +149,303 @@
     .alert-bar.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .fade-up{animation:fadeUp .35s var(--ease) both;}
+    
+    
+/* ── Analytics Modal Shell ─────────────────────────────── */
+#analytics-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(5,15,10,0.72);
+  backdrop-filter: blur(6px);
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 2rem 1rem;
+  animation: amFadeIn .25s ease;
+}
+@keyframes amFadeIn { from{opacity:0} to{opacity:1} }
+
+#analytics-modal .am-shell {
+  background: #fff;
+  border-radius: 20px;
+  max-width: 1080px;
+  width: 100%;
+  box-shadow: 0 32px 80px rgba(0,0,0,.22), 0 0 0 1px rgba(5,150,105,.12);
+  overflow: hidden;
+  animation: amSlideUp .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes amSlideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+/* ── Header ────────────────────────────────────────────── */
+.am-header {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  padding: 2rem 2.5rem 1.8rem;
+  position: relative;
+  overflow: hidden;
+}
+.am-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.am-header-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.3px;
+  margin: 0 0 .3rem;
+}
+.am-header-sub {
+  color: rgba(255,255,255,.65);
+  font-size: .875rem;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: .02em;
+}
+.am-close-btn {
+  position: absolute; top: 1.25rem; right: 1.25rem;
+  background: rgba(255,255,255,.15);
+  border: none; cursor: pointer;
+  color: #fff; border-radius: 50%;
+  width: 38px; height: 38px;
+  font-size: 1.3rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.am-close-btn:hover { background: rgba(255,255,255,.28); }
+
+/* ── Stat Pills Row ────────────────────────────────────── */
+.am-pills {
+  display: flex; gap: .75rem; flex-wrap: wrap;
+  padding: 1.25rem 2.5rem;
+  background: #f0fdf4;
+  border-bottom: 1px solid #d1fae5;
+}
+.am-pill {
+  display: flex; align-items: center; gap: .5rem;
+  background: #fff;
+  border: 1px solid #a7f3d0;
+  border-radius: 50px;
+  padding: .45rem 1rem;
+  font-size: .82rem;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #064e3b;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(5,150,105,.08);
+}
+.am-pill .pill-icon { font-size: 1rem; }
+.am-pill .pill-val { color: #059669; font-size: 1rem; font-weight: 700; }
+
+/* ── Body ──────────────────────────────────────────────── */
+.am-body { padding: 2rem 2.5rem; display: flex; flex-direction: column; gap: 2rem; }
+
+/* ── Section Title ─────────────────────────────────────── */
+.am-section-title {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  color: #064e3b;
+  margin: 0 0 1.1rem;
+  display: flex; align-items: center; gap: .5rem;
+  padding-bottom: .6rem;
+  border-bottom: 2px solid #d1fae5;
+}
+
+/* ── Charts Row ────────────────────────────────────────── */
+.am-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media(max-width: 720px) { .am-charts-row { grid-template-columns: 1fr; } }
+
+.am-chart-card {
+  background: #f8fffe;
+  border: 1px solid #d1fae5;
+  border-radius: 14px;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: 0 2px 12px rgba(5,150,105,.06);
+}
+.am-chart-card h4 {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: .83rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+.am-chart-card svg { display: block; margin: 0 auto; overflow: visible; }
+
+/* ── Gender Section ────────────────────────────────────── */
+.am-gender-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media(max-width: 680px) { .am-gender-row { grid-template-columns: 1fr; } }
+
+.am-gender-card {
+  border-radius: 14px;
+  padding: 1.4rem 1.5rem;
+  border: 1.5px solid;
+}
+.am-gender-card.female {
+  background: linear-gradient(135deg, #fff0f9 0%, #fdf2f8 100%);
+  border-color: #f9a8d4;
+}
+.am-gender-card.male {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border-color: #93c5fd;
+}
+.am-gender-card-header {
+  display: flex; align-items: center; gap: .6rem;
+  margin-bottom: 1rem;
+}
+.am-gender-badge {
+  font-size: 1.6rem;
+}
+.am-gender-card-title {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.am-gender-card.female .am-gender-card-title { color: #9d174d; }
+.am-gender-card.male .am-gender-card-title { color: #1e3a8a; }
+
+.am-gender-stats {
+  display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.am-gender-stat {
+  flex: 1; min-width: 80px;
+  border-radius: 10px;
+  padding: .6rem .75rem;
+  text-align: center;
+}
+.am-gender-card.female .am-gender-stat { background: rgba(249,168,212,.18); }
+.am-gender-card.male .am-gender-stat { background: rgba(147,197,253,.18); }
+
+.am-gender-stat .gs-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: .2rem;
+}
+.am-gender-card.female .gs-val { color: #be185d; }
+.am-gender-card.male .gs-val { color: #1d4ed8; }
+.am-gender-stat .gs-label {
+  font-size: .7rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.am-gender-comment {
+  font-size: .82rem;
+  font-style: italic;
+  line-height: 1.55;
+  padding: .7rem .9rem;
+  border-radius: 8px;
+  border-left: 3px solid;
+}
+.am-gender-card.female .am-gender-comment { background: rgba(249,168,212,.1); border-color: #f472b6; color: #831843; }
+.am-gender-card.male .am-gender-comment { background: rgba(147,197,253,.1); border-color: #60a5fa; color: #1e3a8a; }
+
+/* ── Top 10 Leaderboard ────────────────────────────────── */
+.am-top10-grid {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.am-top10-row {
+  display: flex; align-items: center; gap: .9rem;
+  padding: .65rem 1rem;
+  border-radius: 10px;
+  background: #f8fffe;
+  border: 1px solid #e6f9f2;
+  transition: background .15s, transform .15s;
+  position: relative;
+  overflow: hidden;
+}
+.am-top10-row:hover { background: #ecfdf5; transform: translateX(3px); }
+.am-top10-row.top3 { border-color: #a7f3d0; background: linear-gradient(90deg,#f0fdf4,#fff); }
+
+.am-rank-badge {
+  font-size: 1.25rem;
+  width: 32px; text-align: center;
+  flex-shrink: 0;
+}
+.am-rank-num {
+  width: 22px; text-align: center;
+  font-weight: 800; font-size: .9rem;
+  color: #6b7280; flex-shrink: 0;
+}
+.am-student-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: .92rem;
+  color: #111827;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.am-student-gender-icon { font-size: .9rem; }
+.am-score-bar-wrap {
+  flex: 2; display: flex; align-items: center; gap: .6rem;
+}
+.am-score-bar-bg {
+  flex: 1; height: 7px; background: #e5e7eb; border-radius: 99px; overflow: hidden;
+}
+.am-score-bar-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, #059669, #10b981);
+  transition: width .6s cubic-bezier(.22,1,.36,1);
+}
+.am-score-pill {
+  font-size: .78rem; font-weight: 700;
+  color: #065f46;
+  background: #d1fae5;
+  border-radius: 99px;
+  padding: .15rem .55rem;
+  flex-shrink: 0;
+}
+.am-grade-chip {
+  font-size: .72rem; font-weight: 700;
+  padding: .15rem .55rem;
+  border-radius: 99px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  flex-shrink: 0;
+}
+
+/* ── Overall Comment Banner ────────────────────────────── */
+.am-comment-banner {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  border-radius: 14px;
+  padding: 1.4rem 1.75rem;
+  display: flex; gap: 1rem; align-items: flex-start;
+  color: #fff;
+}
+.am-comment-banner .cb-icon { font-size: 2rem; flex-shrink: 0; margin-top: -.1rem; }
+.am-comment-banner .cb-title {
+  font-family: Georgia, serif;
+  font-size: 1rem; font-weight: 700;
+  margin-bottom: .35rem;
+  opacity: .9;
+}
+.am-comment-banner .cb-text {
+  font-size: .88rem; line-height: 1.6;
+  opacity: .82;
+}
+
+
+.am-gender-progress { margin-top: .75rem; }
+.am-gp-label { font-size: .75rem; color: #6b7280; font-weight: 600; margin-bottom: .3rem; display:flex; justify-content:space-between; }
+.am-gp-track { height: 8px; background: #e5e7eb; border-radius: 99px; overflow: hidden; margin-bottom: .6rem; }
+.am-gp-fill-f { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#ec4899,#f472b6); }
+.am-gp-fill-m { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#3b82f6,#60a5fa); }
+
+    
   </style>
 </head>
 <body>
@@ -262,23 +559,62 @@
   </div>
 </div>
 
+
 <div id="analytics-modal">
-  <div class="modal-content" style="max-width:1000px;">
-    <button class="modal-close" onclick="closeAnalyticsModal()">×</button>
-    <h2 style="font-family:var(--ff-display);font-weight:400;font-size:1.8rem;text-align:center;margin-bottom:1.5rem;">
-      <i class="fas fa-chart-pie" style="color:var(--g600);"></i> Advanced Performance Analytics
-    </h2>
-    <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem;">
-      <div style="background:var(--g50);padding:1.25rem;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--wire);">
-        <h3 style="margin-bottom:1rem;text-align:center;color:var(--slate);font-size:.95rem;font-weight:700;">Average Score per Test</h3>
-        <svg id="bar-chart" width="450" height="350"></svg>
-      </div>
-      <div style="background:var(--g50);padding:1.25rem;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--wire);">
-        <h3 style="margin-bottom:1rem;text-align:center;color:var(--slate);font-size:.95rem;font-weight:700;">Grade Distribution</h3>
-        <svg id="pie-chart" width="350" height="350"></svg>
-      </div>
+  <div class="am-shell">
+
+    <!-- Heade-->
+    <div class="am-header">
+      <button class="am-close-btn" onclick="closeAnalyticsModal()">×</button>
+      <div class="am-header-title">📊 Advanced Performance Analytics</div>
+      <div class="am-header-sub" id="am-header-sub">Class overview · All students · Full report</div>
     </div>
-    <div id="top-students" style="background:var(--white);padding:1.5rem;border-radius:var(--radius);border:1px solid var(--wire);box-shadow:var(--shadow-sm);"></div>
+
+    
+    <div class="am-pills" id="am-pills">
+      
+    </div>
+
+    
+    <div class="am-body">
+
+
+      <div>
+        <div class="am-section-title">📈 Score & Grade Overview</div>
+        <div class="am-charts-row">
+          <div class="am-chart-card">
+            <h4>Average Score per Test</h4>
+            <svg id="bar-chart" width="100%" height="260"></svg>
+          </div>
+          <div class="am-chart-card">
+            <h4>Grade Distribution</h4>
+            <svg id="pie-chart" width="100%" height="260"></svg>
+          </div>
+        </div>
+      </div>
+
+
+      <div>
+        <div class="am-section-title">⚧️ Gender Performance Analysis</div>
+        <div class="am-gender-row" id="am-gender-row">
+          
+        </div>
+      </div>
+
+      
+      <div>
+        <div class="am-section-title">🏆 Top 10 Students — Honours Board</div>
+        <div class="am-top10-grid" id="am-top10-grid">
+          
+        </div>
+      </div>
+
+      
+      <div class="am-comment-banner" id="am-comment-banner">
+        
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -288,6 +624,8 @@
     <h2 style="font-size:1.1rem;">Processing Data…</h2>
   </div>
 </div>
+
+
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
@@ -324,10 +662,9 @@ let recentUpdates      = [];
 let teacherListeners   = [];
 let bulkSelection      = new Set();
 
+let _registrationInProgress = false;  // ← NEW
 
-// Add this with your other module-level variables
-let _registrationInProgress = false;
-
+let studentGenderMap = new Map();   // studentId → "M" | "F"
 // ═══════════════════════════════════════
 // KEY FIX 1: classIdVariants
 // Original code used .replace() which only
@@ -1024,7 +1361,17 @@ if(section==='students'){
       const tw=document.createElement('div'); content.appendChild(tw);
 
       // KEY FIX: Query without term filter — filter in JS to handle all formats
-      const q=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'attendanceHistory'),where('classId','in',variants));
+      
+const q = query(
+  collection(
+    db,
+    'schools',
+    schoolId,
+    'attendanceHistory'
+  ),
+  where('classId', 'in', variants)
+);
+      
       const data=await getDocs(q);
       if(data.empty){ tw.innerHTML='<p class="empty-state"><i class="fas fa-calendar-times"></i> No attendance logs found for this class.</p>'; return; }
 
@@ -1066,9 +1413,24 @@ if(section==='students'){
     }
 
     // ── RESULTS ───────────────────────────────
-    else if(section==='results'){
-      const q=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'results'),where('classId','in',variants));
-      const data=await getDocs(q);
+    
+    else if (section === 'results') {
+  
+  const q = query(
+    collection(
+      db,
+      'schools',
+      schoolId,
+      'results'
+    ),
+    where('classId', 'in', variants)
+  );
+  
+  const data = await getDocs(q);
+    
+    await loadStudentGenders();
+    
+    
       currentResultsData=[];
       if(data.empty){ content.innerHTML='<p class="empty-state"><i class="fas fa-chart-bar"></i> No academic results published yet.</p>'; return; }
       const bc=document.createElement('div');
@@ -1097,16 +1459,54 @@ if(section==='students'){
     }
 
     // ── FEES ──────────────────────────────────
-    else if(section==='fees'){
-      const configRef=doc(db,'schools',schoolId,'teachers',currentTeacherId,'feesConfig',selectedClassId);
-      const configSnap=await getDoc(configRef);
-      const totalFee=configSnap.exists()?configSnap.data().totalFee||0:0;
-      const studQ=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'students'),where('classId','in',variants));
-      const studSnap=await getDocs(studQ);
-      const studMap=new Map(); studSnap.forEach(ds=>studMap.set(ds.id,ds.data()));
-      const expectedTotal=totalFee*studMap.size;
-      const feesQ=query(collection(db,'schools',schoolId,'teachers',currentTeacherId,'fees'),where('classId','in',variants));
-      const feesData=await getDocs(feesQ);
+    
+    else if (section === 'fees') {
+  
+  const configRef = doc(
+    db,
+    'schools',
+    schoolId,
+    'feesConfig',
+    selectedClassId
+  );
+  
+  const configSnap = await getDoc(configRef);
+  const totalFee = configSnap.exists() ?
+    configSnap.data().totalFee || 0 :
+    0;
+  
+  // Students are stored at schools/{schoolId}/students
+  const studQ = query(
+    collection(
+      db,
+      'schools',
+      schoolId,
+      'students'
+    ),
+    where('classId', 'in', variants)
+  );
+  
+  const studSnap = await getDocs(studQ);
+  
+  const studMap = new Map();
+  studSnap.forEach(ds => studMap.set(ds.id, ds.data()));
+  
+  const expectedTotal = totalFee * studMap.size;
+  
+  // Fees are stored at schools/{schoolId}/fees
+  const feesQ = query(
+    collection(
+      db,
+      'schools',
+      schoolId,
+      'fees'
+    ),
+    where('classId', 'in', variants)
+  );
+  
+  const feesData = await getDocs(feesQ);
+    
+    
       const ov=document.createElement('div');
       ov.style.cssText='margin-bottom:1.5rem;background:var(--g50);padding:1.25rem;border-radius:var(--radius);border:1px solid var(--wire);';
       ov.innerHTML=`<h3 style="margin-bottom:.75rem;"><i class="fas fa-bullseye" style="color:var(--g600);"></i> Class Target Fee: <span style="color:var(--g600);font-weight:800;">K${totalFee}</span> <span style="font-size:.85rem;color:var(--muted);"> / student</span></h3>
@@ -1413,72 +1813,495 @@ document.addEventListener('keydown',e=>{
   if(document.getElementById('analytics-modal')?.style.display==='flex') window.closeAnalyticsModal();
 });
 
-// ─── ANALYTICS ────────────────────────────
-function computeAnalytics(){
-  let testAvgs=[],gradeCounts={1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
-  let studentScores=new Map();
-  currentResultsData.forEach(result=>{
-    const so=result.scores||{}; let sum=0,cnt=0;
-    Object.values(so).forEach(score=>{sum+=score;cnt++;const g=parseInt(getZambianGrade(score))||9;if(g>=1&&g<=9)gradeCounts[g]++;});
-    if(cnt>0) testAvgs.push({test:`${result.subject} - ${result.testName}`,avg:parseFloat((sum/cnt).toFixed(1))});
-    Object.entries(so).forEach(([id,score])=>{let e=studentScores.get(id)||{total:0,count:0};e.total+=score;e.count++;studentScores.set(id,e);});
-  });
-  const studentAvgs=Array.from(studentScores,([id,d])=>({id,avg:d.count?(d.total/d.count).toFixed(1):0})).sort((a,b)=>b.avg-a.avg);
-  return {testAvgs,gradeCounts,studentAvgs};
+
+
+// ─── GENDER HANDLING ─────────────────────────────────────────────
+
+async function loadStudentGenders() {
+  if (!selectedClassId || !schoolId) return;
+  
+  const variants = classIdVariants(selectedClassId);
+  const q = query(
+    collection(db, 'schools', schoolId, 'students'),
+    where('classId', 'in', variants)
+  );
+  
+  try {
+    const snap = await getDocs(q);
+    studentGenderMap.clear();
+
+    snap.forEach(doc => {
+      const data = doc.data();
+      let raw = (data.gender || '').toString().trim().toUpperCase();
+      
+      if (['MALE', 'M'].includes(raw) || raw.startsWith('M')) {
+        studentGenderMap.set(doc.id, 'M');
+      } else if (['FEMALE', 'F'].includes(raw) || raw.startsWith('F')) {
+        studentGenderMap.set(doc.id, 'F');
+      }
+    });
+    
+    console.log(`[Analytics] Loaded ${studentGenderMap.size} student genders successfully`);
+  } catch (e) {
+    console.error("Failed to load student genders:", e);
+  }
 }
-window.showAnalyticsModal=function(){
-  if(!currentResultsData.length) return alert('No results data available yet.');
-  const modal=document.getElementById('analytics-modal'); if(!modal) return;
-  modal.style.display='flex';
-  const {testAvgs,gradeCounts,studentAvgs}=computeAnalytics();
-  renderBarChart(testAvgs); renderPieChart(gradeCounts);
-  const topDiv=document.getElementById('top-students'); if(!topDiv) return;
-  topDiv.innerHTML=`<h3 style="font-size:1.3rem;border-bottom:2px solid var(--wire);padding-bottom:.75rem;margin-bottom:1rem;color:var(--g700);"><i class="fas fa-award"></i> Honors Board — Top Performers</h3><ul style="columns:2;font-size:1rem;list-style:none;padding:0;">`;
-  studentAvgs.slice(0,8).forEach((s,i)=>{
-    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'🔹';
-    topDiv.innerHTML+=`<li style="margin-bottom:10px;background:var(--g50);padding:10px 12px;border-radius:8px;border:1px solid var(--wire);">${medal} <strong>${s.id}</strong><br><span style="color:var(--muted);font-size:.82rem;">Avg: ${s.avg}% | Grade: ${getZambianGrade(parseFloat(s.avg)).split(' ')[0]}</span></li>`;
+
+function _genderOf(studentId) {
+  return studentGenderMap.get(studentId) || 'U';
+}
+
+function _gradeLabel(score) {
+  const raw = getZambianGrade(score);
+  return raw.split(' ')[0];
+}
+
+function _performanceComment(avg, count, gender) {
+  const gLabel = gender === 'F' ? 'Female students' : gender === 'M' ? 'Male students' : 'Students';
+  if (count === 0) return `${gLabel}: No data recorded yet.`;
+  if (avg >= 80) return `🌟 ${gLabel} are performing exceptionally well with an average of ${avg.toFixed(1)}%. Outstanding academic discipline is evident.`;
+  if (avg >= 65) return `✅ ${gLabel} show strong performance averaging ${avg.toFixed(1)}%. Consistent effort is yielding good results.`;
+  if (avg >= 50) return `📘 ${gLabel} are achieving satisfactory results (avg ${avg.toFixed(1)}%). Targeted revision is recommended.`;
+  if (avg >= 40) return `⚠️ ${gLabel} need attention — averaging ${avg.toFixed(1)}%. Additional support is advised.`;
+  return `🚨 ${gLabel} are struggling (avg ${avg.toFixed(1)}%). Urgent intervention is strongly recommended.`;
+}
+
+function _overallComment(avg, totalStudents, passRate) {
+  if (avg >= 75) {
+    return {
+      icon: '🎉',
+      title: 'Outstanding Class Performance',
+      text: `This class is performing at an excellent level with an overall average of ${avg.toFixed(1)}% and a pass rate of ${passRate.toFixed(0)}%. The headteacher commends both students and staff.`
+    };
+  } else if (avg >= 60) {
+    return {
+      icon: '👍',
+      title: 'Good Overall Performance',
+      text: `The class average stands at ${avg.toFixed(1)}% with ${passRate.toFixed(0)}% of students passing. Focus on supporting the lower performers.`
+    };
+  } else if (avg >= 50) {
+    return {
+      icon: '📌',
+      title: 'Average Performance — Action Needed',
+      text: `With an average of ${avg.toFixed(1)}% and pass rate of ${passRate.toFixed(0)}%, structured intervention and parent engagement is recommended.`
+    };
+  } else {
+    return {
+      icon: '🚨',
+      title: 'Below Expected Standards — Urgent Review',
+      text: `The class average of ${avg.toFixed(1)}% requires immediate attention. Individual learning plans and increased support are urgently needed.`
+    };
+  }
+}
+
+// ─── COMPUTE ANALYTICS ─────────────────────────────────────────────
+function computeAnalytics() {
+  let testAvgs = [], gradeCounts = {1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
+  let studentScores = new Map();
+
+  currentResultsData.forEach(result => {
+    const so = result.scores || {};
+    let sum = 0, cnt = 0;
+
+    Object.entries(so).forEach(([id, score]) => {
+      const sc = Number(score) || 0;
+      sum += sc; 
+      cnt++;
+
+      const g = parseInt(getZambianGrade(sc)) || 9;
+      if (g >= 1 && g <= 9) gradeCounts[g]++;
+
+      const gender = _genderOf(id);
+      const entry = studentScores.get(id) || { total: 0, count: 0, gender };
+      entry.total += sc;
+      entry.count++;
+      studentScores.set(id, entry);
+    });
+
+    if (cnt > 0) {
+      testAvgs.push({
+        test: `${result.subject || ''} — ${result.testName || 'Test'}`,
+        avg: parseFloat((sum / cnt).toFixed(1))
+      });
+    }
   });
-  topDiv.innerHTML+='</ul>';
+
+  const allStudents = Array.from(studentScores, ([id, d]) => ({
+    id,
+    avg: d.count ? parseFloat((d.total / d.count).toFixed(1)) : 0,
+    gender: d.gender
+  })).sort((a, b) => b.avg - a.avg);
+
+  const females = allStudents.filter(s => s.gender === 'F');
+  const males   = allStudents.filter(s => s.gender === 'M');
+
+  const fAvg = females.length ? females.reduce((s,x)=>s+x.avg,0)/females.length : 0;
+  const mAvg = males.length   ? males.reduce((s,x)=>s+x.avg,0)/males.length     : 0;
+
+  const totalScores = allStudents.map(s => s.avg);
+  const overallAvg  = totalScores.length ? totalScores.reduce((a,b)=>a+b,0)/totalScores.length : 0;
+  const passCount   = allStudents.filter(s => s.avg >= 50).length;
+  const passRate    = allStudents.length ? (passCount / allStudents.length) * 100 : 0;
+
+  return { 
+    testAvgs, 
+    gradeCounts, 
+    allStudents, 
+    females, 
+    males, 
+    fAvg, 
+    mAvg, 
+    overallAvg, 
+    passRate, 
+    totalStudents: allStudents.length 
+  };
+}
+
+// ─── SHOW ANALYTICS MODAL (Full Production Version) ─────────────────────
+window.showAnalyticsModal = async function () {
+  if (!currentResultsData.length) {
+    return alert('No results data available yet.');
+  }
+
+  const modal = document.getElementById('analytics-modal');
+  if (!modal) return;
+
+  // Ensure genders are loaded
+  if (studentGenderMap.size === 0) {
+    await loadStudentGenders();
+  }
+
+  modal.style.display = 'flex';
+
+  const d = computeAnalytics();
+
+  // Pills — FIXED escaped parentheses
+  const pillsEl = document.getElementById('am-pills');
+  pillsEl.innerHTML = [
+    { icon:'👥', label:'Total Students', val: d.totalStudents },
+    { icon:'📊', label:'Class Average',  val: d.overallAvg.toFixed(1)+'%' },
+    { icon:'✅', label:'Pass Rate',       val: d.passRate.toFixed(0)+'%' },
+    { icon:'♀️', label:'Female Students', val: d.females.length },
+    { icon:'♂️', label:'Male Students',   val: d.males.length },
+    { icon:'📝', label:'Tests Recorded',  val: d.testAvgs.length },
+  ].map(p => `<div class="am-pill"><span class="pill-icon">${p.icon}</span> ${p.label}: <span class="pill-val">${p.val}</span></div>`).join('');
+
+  // Header subtitle
+  const sub = document.getElementById('am-header-sub');
+  if (sub) sub.textContent = `${d.totalStudents} students · ${d.females.length} female · ${d.males.length} male · ${d.testAvgs.length} test(s)`;
+
+  // Charts
+  renderBarChart(d.testAvgs);
+  renderPieChart(d.gradeCounts);
+
+  // Gender Cards
+  const genderRow = document.getElementById('am-gender-row');
+  const topF = d.females[0] || null;
+  const topM = d.males[0] || null;
+  const fPassRate = d.females.length ? (d.females.filter(s=>s.avg>=50).length/d.females.length*100).toFixed(0) : 0;
+  const mPassRate = d.males.length ? (d.males.filter(s=>s.avg>=50).length/d.males.length*100).toFixed(0) : 0;
+
+  function genderCard(gender) {
+    const isFemale = gender === 'F';
+    const cls = isFemale ? 'female' : 'male';
+    const badge = isFemale ? '♀️' : '♂️';
+    const title = isFemale ? 'Female Students' : 'Male Students';
+    const students = isFemale ? d.females : d.males;
+    const avg = isFemale ? d.fAvg : d.mAvg;
+    const passR = isFemale ? fPassRate : mPassRate;
+    const top = isFemale ? topF : topM;
+    const comment = _performanceComment(avg, students.length, gender);
+    const barPct = Math.min(avg, 100);
+
+    // FIXED: progress bar class and top student line
+    return `
+    <div class="am-gender-card ${cls}">
+      <div class="am-gender-card-header">
+        <span class="am-gender-badge">${badge}</span>
+        <span class="am-gender-card-title">${title}</span>
+      </div>
+      <div class="am-gender-stats">
+        <div class="am-gender-stat"><div class="gs-val">${students.length}</div><div class="gs-label">Students</div></div>
+        <div class="am-gender-stat"><div class="gs-val">${avg.toFixed(1)}%</div><div class="gs-label">Avg Score</div></div>
+        <div class="am-gender-stat"><div class="gs-val">${passR}%</div><div class="gs-label">Pass Rate</div></div>
+        <div class="am-gender-stat"><div class="gs-val">${top ? top.avg+'%' : '—'}</div><div class="gs-label">Top Score</div></div>
+      </div>
+      <div class="am-gender-progress">
+        <div class="am-gp-label"><span>Average performance</span><span>${avg.toFixed(1)}%</span></div>
+        <div class="am-gp-track"><div class="${isFemale?'am-gp-fill-f':'am-gp-fill-m'}" style="width:${barPct}%"></div></div>
+        ${top ? `<div style="font-size:.75rem;color:#6b7280;margin-top:.4rem;">🏅 Top: <strong>${top.id}</strong> — ${top.avg}%</div>` : ''}
+      </div>
+      <div class="am-gender-comment">${comment}</div>
+    </div>`;
+  }
+
+  genderRow.innerHTML = genderCard('F') + genderCard('M');
+
+  // Top 10 with Gender Icons — FIXED escaped parentheses
+  const top10El = document.getElementById('am-top10-grid');
+  const medals = ['🥇','🥈','🥉'];
+  
+  top10El.innerHTML = d.allStudents.slice(0, 10).map((s, i) => {
+    const gIcon = s.gender === 'F' ? '♀️' : s.gender === 'M' ? '♂️' : '⚪';
+    const isTop3 = i < 3;
+    return `
+    <div class="am-top10-row${isTop3 ? ' top3' : ''}">
+      <span class="am-rank-badge">${medals[i] || ''}</span>
+      ${i >= 3 ? `<span class="am-rank-num">${i+1}</span>` : ''}
+      <span class="am-student-name">${s.id}</span>
+      <span class="am-student-gender-icon">${gIcon}</span>
+      <div class="am-score-bar-wrap">
+        <div class="am-score-bar-bg"><div class="am-score-bar-fill" style="width:${Math.min(s.avg, 100)}%"></div></div>
+        <span class="am-score-pill">${s.avg}%</span>
+        <span class="am-grade-chip">Grd ${_gradeLabel(s.avg)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Overall Comment
+  const banner = document.getElementById('am-comment-banner');
+  const { icon, title, text } = _overallComment(d.overallAvg, d.totalStudents, d.passRate);
+  banner.innerHTML = `
+    <div class="cb-icon">${icon}</div>
+    <div>
+      <div class="cb-title">${title}</div>
+      <div class="cb-text">${text}</div>
+    </div>`;
 };
-window.closeAnalyticsModal=function(){ const m=document.getElementById('analytics-modal'); if(m) m.style.display='none'; };
 
-function renderBarChart(data){
-  const svg=d3.select('#bar-chart'); svg.selectAll('*').remove();
-  const w=450,h=350,m={top:20,right:30,bottom:90,left:50};
-  const g=svg.append('g').attr('transform',`translate(${m.left},${m.top})`);
-  const x=d3.scaleBand().domain(data.map(d=>d.test)).range([0,w-m.left-m.right]).padding(.3);
-  const y=d3.scaleLinear().domain([0,(d3.max(data,d=>d.avg)||100)*1.1]).nice().range([h-m.top-m.bottom,0]);
-  g.append('g').attr('transform',`translate(0,${h-m.top-m.bottom})`).call(d3.axisBottom(x)).selectAll('text').attr('transform','rotate(-35)').style('text-anchor','end').style('font-size','11px');
-  g.append('g').call(d3.axisLeft(y));
-  g.selectAll('rect').data(data).enter().append('rect').attr('x',d=>x(d.test)).attr('y',d=>y(d.avg)).attr('width',x.bandwidth()).attr('height',d=>h-m.top-m.bottom-y(d.avg)).attr('fill','#059669').attr('rx',4);
-  g.selectAll('text.label').data(data).enter().append('text').attr('x',d=>x(d.test)+x.bandwidth()/2).attr('y',d=>y(d.avg)-8).attr('text-anchor','middle').attr('fill','#0d1f15').style('font-weight','bold').style('font-size','12px').text(d=>d.avg+'%');
-}
-function renderPieChart(gradeCounts){
-  const svg=d3.select('#pie-chart'); svg.selectAll('*').remove();
-  const w=350,h=350,r=Math.min(w,h)/2-30;
-  const g=svg.append('g').attr('transform',`translate(${w/2},${h/2})`);
-  const data=Object.keys(gradeCounts).filter(k=>gradeCounts[k]>0).map(k=>({grade:`${getZambianGrade(parseInt(k)).split(' ')[0]}`,value:gradeCounts[k]}));
-  const pie=d3.pie().value(d=>d.value); const arc=d3.arc().innerRadius(50).outerRadius(r);
-  const color=d3.scaleOrdinal().range(['#059669','#0d9488','#0284c7','#7c3aed','#dc2626','#ea580c','#65a30d']);
-  const arcs=g.selectAll('arc').data(pie(data)).enter().append('g');
-  arcs.append('path').attr('d',arc).attr('fill',(d,i)=>color(i)).attr('stroke','white').attr('stroke-width','2px');
-  arcs.append('text').attr('transform',d=>`translate(${arc.centroid(d)})`).attr('text-anchor','middle').style('font-size','12px').style('font-weight','bold').style('fill','#fff').text(d=>d.data.grade);
-}
-function exportResultsToPDF(){
-  if(!currentResultsData.length) return alert('No results to export.');
-  const {jsPDF}=window.jspdf; const pdfDoc=new jsPDF();
-  const {testAvgs,studentAvgs}=computeAnalytics();
-  pdfDoc.setFontSize(22); pdfDoc.setTextColor(5,150,105); pdfDoc.text('Official Academic Report',20,20);
-  pdfDoc.setFontSize(12); pdfDoc.setTextColor(100,100,100); pdfDoc.text(`Generated: ${new Date().toLocaleDateString()} | Class: ${selectedClassId}`,20,30);
-  pdfDoc.setTextColor(0,0,0); pdfDoc.setFontSize(14); let y=45;
-  pdfDoc.text('Subject Averages:',20,y); y+=10; pdfDoc.setFontSize(12);
-  testAvgs.forEach(t=>{pdfDoc.text(`• ${t.test}: ${t.avg}%`,30,y);y+=8;});
-  y+=10; pdfDoc.setFontSize(14); pdfDoc.text('Honors Board (Top Students):',20,y); y+=10; pdfDoc.setFontSize(12);
-  studentAvgs.slice(0,8).forEach(s=>{pdfDoc.text(`• ${s.id} – Score: ${s.avg}% | Grade: ${getZambianGrade(parseFloat(s.avg))}`,30,y);y+=8;if(y>260){pdfDoc.addPage();y=20;}});
-  pdfDoc.setFontSize(10); pdfDoc.setTextColor(150,150,150); pdfDoc.text('Generated automatically by TeachMate 3.0.',20,280);
-  pdfDoc.save(`TeachMate_Academic_Report_${selectedClassId||'export'}.pdf`);
+window.closeAnalyticsModal = function () {
+  const m = document.getElementById('analytics-modal');
+  if (m) m.style.display = 'none';
+};
+
+// ─── BAR CHART ───────────────────────────────────────────
+function renderBarChart(data) {
+  const container = document.getElementById('bar-chart');
+  if (!container) return;
+  const fullW = container.parentElement.clientWidth - 40 || 400;
+  const w = fullW, h = 260, m = { top: 24, right: 20, bottom: 80, left: 44 };
+  const iw = w - m.left - m.right, ih = h - m.top - m.bottom;
+
+  const svg = d3.select('#bar-chart')
+    .attr('width', w).attr('height', h);
+  svg.selectAll('*').remove();
+
+  if (!data.length) {
+    svg.append('text').attr('x', w/2).attr('y', h/2)
+      .attr('text-anchor','middle').attr('fill','#9ca3af').text('No test data');
+    return;
+  }
+
+  const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+
+  const x = d3.scaleBand().domain(data.map(d => d.test)).range([0, iw]).padding(.35);
+  const y = d3.scaleLinear().domain([0, Math.max(100, d3.max(data, d => d.avg) * 1.12)]).nice().range([ih, 0]);
+
+  // Grid lines
+  g.append('g').attr('class','grid')
+    .call(d3.axisLeft(y).tickSize(-iw).tickFormat(''))
+    .selectAll('line').attr('stroke','#e5e7eb').attr('stroke-dasharray','3,3');
+  g.select('.griddomain').remove();
+
+  // Axes
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(x))
+    .selectAll('text').attr('transform','rotate(-38)').style('text-anchor','end')
+    .style('font-size','10px').style('fill','#6b7280');
+  g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d => d+'%'))
+    .selectAll('text').style('font-size','10px').style('fill','#6b7280');
+  g.select('.domain').remove();
+
+  // Bars
+  g.selectAll('rect').data(data).enter().append('rect')
+    .attr('x', d => x(d.test))
+    .attr('y', ih)
+    .attr('width', x.bandwidth())
+    .attr('height', 0)
+    .attr('fill', (d,i) => d3.interpolateRgb('#059669','#10b981')(i/Math.max(data.length-1,1)))
+    .attr('rx', 5)
+    .transition().duration(600).delay((d,i)=>i*80)
+    .attr('y', d => y(d.avg))
+    .attr('height', d => ih - y(d.avg));
+
+  // Labels
+  g.selectAll('text.lbl').data(data).enter().append('text')
+    .attr('class','lbl')
+    .attr('x', d => x(d.test) + x.bandwidth()/2)
+    .attr('y', d => y(d.avg) - 6)
+    .attr('text-anchor','middle')
+    .attr('fill','#065f46')
+    .style('font-weight','700')
+    .style('font-size','11px')
+    .text(d => d.avg+'%');
 }
 
+// ─── PIE / DONUT CHART ───────────────────────────────────
+function renderPieChart(gradeCounts) {
+  const container = document.getElementById('pie-chart');
+  if (!container) return;
+  const size = Math.min(container.parentElement.clientWidth - 40 || 260, 260);
+  const w = size, h = 260, r = Math.min(w, h) / 2 - 20;
+
+  const svg = d3.select('#pie-chart').attr('width', w).attr('height', h);
+  svg.selectAll('*').remove();
+
+  const data = Object.keys(gradeCounts)
+    .filter(k => gradeCounts[k] > 0)
+    .map(k => ({ grade: `Grd ${k}`, value: gradeCounts[k] }));
+
+  if (!data.length) {
+    svg.append('text').attr('x',w/2).attr('y',h/2)
+      .attr('text-anchor','middle').attr('fill','#9ca3af').text('No data');
+    return;
+  }
+
+  const g = svg.append('g').attr('transform', `translate(${w/2},${h/2})`);
+  const pie = d3.pie().value(d => d.value).sort(null);
+  const arc = d3.arc().innerRadius(r*.5).outerRadius(r);
+  const arcHover = d3.arc().innerRadius(r*.5).outerRadius(r+8);
+  const colors = ['#059669','#0d9488','#0284c7','#7c3aed','#db2777','#dc2626','#ea580c','#65a30d','#78716c'];
+  const color = d3.scaleOrdinal().range(colors);
+
+  const arcs = g.selectAll('arc').data(pie(data)).enter().append('g');
+
+  arcs.append('path')
+    .attr('d', arc)
+    .attr('fill', (d,i) => color(i))
+    .attr('stroke','#fff').attr('stroke-width','2px')
+    .style('cursor','pointer')
+    .on('mouseover', function(event, d) {
+      d3.select(this).transition().duration(150).attr('d', arcHover);
+    })
+    .on('mouseout', function(event, d) {
+      d3.select(this).transition().duration(150).attr('d', arc);
+    })
+    .transition().duration(700).attrTween('d', function(d) {
+      const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+      return t => arc(i(t));
+    });
+
+  // Center text
+  g.append('text').attr('text-anchor','middle').attr('y','-4px')
+    .style('font-size','11px').style('fill','#6b7280').text('Grades');
+  g.append('text').attr('text-anchor','middle').attr('y','12px')
+    .style('font-size','13px').style('font-weight','700').style('fill','#064e3b')
+    .text(data.reduce((s,d)=>s+d.value,0)+' scores');
+
+  // Labels
+  arcs.append('text')
+    .attr('transform', d => `translate(${arc.centroid(d)})`)
+    .attr('text-anchor','middle')
+    .style('font-size','10px').style('font-weight','700').style('fill','#fff')
+    .text(d => d.data.value > 0 ? d.data.grade : '');
+}
+
+
+
+window.exportResultsToPDF = async function() {
+  if (!currentResultsData || currentResultsData.length === 0) {
+    alert("No results data available to export.");
+    return;
+  }
+  
+  showLoading();
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+    
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+    
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(`${schoolName || 'School'} - Academic Results`, pageWidth / 2, y, { align: "center" });
+    y += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Class: ${selectedClassId?.replace(/_/g, ' ') || '—'}`, pageWidth / 2, y, { align: "center" });
+    y += 8;
+    doc.text(`Generated on: ${new Date().toLocaleDateString('en-ZM')}`, pageWidth / 2, y, { align: "center" });
+    y += 15;
+    
+    // Loop through each test/result set
+    for (const result of currentResultsData) {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text(`${result.subject || '—'} - ${result.testName || 'Test'}`, 20, y);
+      y += 8;
+      
+      if (result.date) {
+        doc.setFontSize(10);
+        doc.text(`Date: ${fmtDate(result.date)}`, 20, y);
+        y += 7;
+      }
+      
+      // Table header
+      doc.setFontSize(10);
+      doc.setFillColor(5, 150, 105);
+      doc.rect(20, y, pageWidth - 40, 8, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.text("Student ID", 25, y + 6);
+      doc.text("Score", 85, y + 6);
+      doc.text("Grade", 120, y + 6);
+      y += 8;
+      
+      // Student rows
+      doc.setTextColor(0, 0, 0);
+      const scores = result.scores || {};
+      
+      // Sort by score descending
+      const sortedScores = Object.entries(scores)
+        .sort((a, b) => b[1] - a[1]);
+      
+      for (const [studentId, score] of sortedScores) {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        const grade = getZambianGrade(score);
+        const isFail = score < 40;
+        
+        doc.setFont("helvetica", isFail ? "bold" : "normal");
+        if (isFail) doc.setTextColor(220, 38, 38);
+        
+        doc.text(studentId, 25, y + 6);
+        doc.text(`${score}%`, 85, y + 6);
+        doc.text(grade, 120, y + 6);
+        
+        y += 7;
+      }
+      
+      y += 12; // spacing between tests
+    }
+    
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text("TeachMate 3.0 • Headteacher Portal", pageWidth / 2, 290, { align: "center" });
+    
+    // Save
+    const fileName = `\( {selectedClassId || 'class'}_results_ \){new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(fileName);
+    
+  } catch (err) {
+    console.error(err);
+    alert("Failed to generate PDF: " + err.message);
+  } finally {
+    hideLoading();
+  }
+};
 
 
 // ─── INIT AUTHENTICATION ─────────────────────────────────
