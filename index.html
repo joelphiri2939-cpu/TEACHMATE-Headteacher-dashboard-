@@ -1032,137 +1032,701 @@ function makeSortable(tableContainer) {
   });
 }
 
-// ─── TEACHERS ────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════
+//  TEACHMATE 3.0 — PREMIUM STAFF DIRECTORY MODULE
+//  Full drop-in replacement for the loadTeachers / renderTeacherList block
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Inject CSS once ──────────────────────────────────────────────
+(function injectStaffStyles() {
+  if (document.getElementById('tm-staff-css')) return;
+  const s = document.createElement('style');
+  s.id = 'tm-staff-css';
+  s.textContent = `
+
+/* ══ Staff Directory Shell ══════════════════════════════════════ */
+.sd-shell { display: flex; flex-direction: column; gap: 0; }
+
+/* ══ Stats Bar ══════════════════════════════════════════════════ */
+.sd-stats-bar {
+  display: flex; gap: .75rem; flex-wrap: wrap;
+  padding: 1rem 0 1.5rem;
+}
+.sd-stat-pill {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .45rem 1.1rem;
+  border-radius: 50px;
+  font-size: .8rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  border: 1.5px solid;
+  transition: transform .15s;
+}
+.sd-stat-pill:hover { transform: translateY(-1px); }
+.sd-stat-pill.total   { background: #f0fdf4; border-color: #a7f3d0; color: #065f46; }
+.sd-stat-pill.active  { background: #ecfdf5; border-color: #6ee7b7; color: #047857; }
+.sd-stat-pill.pending { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.sd-stat-pill.classes { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.sd-stat-pill .sp-val { font-size: 1.1rem; font-weight: 800; }
+
+/* ══ Pending Banner ═════════════════════════════════════════════ */
+.sd-pending-banner {
+  background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+  border: 1px solid rgba(251,191,36,.25);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .75rem;
+  position: relative; overflow: hidden;
+}
+.sd-pending-banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 10% 50%, rgba(251,191,36,.12) 0%, transparent 60%);
+}
+.sd-pending-banner-left {
+  display: flex; align-items: center; gap: .75rem;
+  position: relative; z-index: 1;
+}
+.sd-pending-icon {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: rgba(251,191,36,.2); border: 1px solid rgba(251,191,36,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.sd-pending-label {
+  font-size: .72rem; font-weight: 800; color: rgba(253,224,71,.7);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 2px;
+}
+.sd-pending-count {
+  font-size: .95rem; font-weight: 700; color: #fef3c7;
+}
+.sd-pending-actions {
+  display: flex; gap: .5rem; align-items: center;
+  position: relative; z-index: 1; flex-wrap: wrap;
+}
+.sd-bulk-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: .4rem .9rem; border-radius: 50px;
+  font-size: .78rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  border: none; cursor: pointer;
+  transition: opacity .15s, transform .15s;
+  margin: 0; box-shadow: none; width: auto;
+}
+.sd-bulk-btn:hover { opacity: .88; transform: translateY(-1px); }
+.sd-bulk-btn.approve { background: #10b981; color: #fff; }
+.sd-bulk-btn.reject  { background: #ef4444; color: #fff; }
+.sd-bulk-btn.select  { background: rgba(255,255,255,.15); color: #fef3c7; border: 1px solid rgba(255,255,255,.2); }
+
+/* ══ Search + Filter Row ════════════════════════════════════════ */
+.sd-toolbar {
+  display: flex; gap: .75rem; align-items: center;
+  margin-bottom: 1.25rem; flex-wrap: wrap;
+}
+.sd-search-wrap {
+  flex: 1; min-width: 200px;
+  position: relative;
+}
+.sd-search-wrap i {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: #9ca3af; font-size: .85rem; pointer-events: none;
+}
+.sd-search {
+  width: 100%; padding: .7rem 1rem .7rem 2.5rem;
+  border: 1.5px solid #d1fae5;
+  border-radius: 50px;
+  font-size: .88rem; font-family: 'Outfit', system-ui, sans-serif;
+  background: #f0fdf4; color: #052e16;
+  transition: all .18s;
+  margin: 0;
+}
+.sd-search:focus {
+  outline: none; border-color: #10b981;
+  background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,.12);
+}
+.sd-filter-btn {
+  padding: .5rem 1rem; border-radius: 50px;
+  border: 1.5px solid #d1fae5;
+  background: transparent; color: #3d5247;
+  font-size: .78rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  cursor: pointer; transition: all .18s;
+  display: flex; align-items: center; gap: 5px;
+  white-space: nowrap; margin: 0; box-shadow: none; width: auto;
+}
+.sd-filter-btn:hover { background: #ecfdf5; border-color: #6ee7b7; transform: none; }
+.sd-filter-btn.active {
+  background: linear-gradient(135deg,#065f46,#059669);
+  color: #fff; border-color: transparent;
+  box-shadow: 0 2px 8px rgba(5,150,105,.25);
+}
+
+/* ══ Grid ═══════════════════════════════════════════════════════ */
+.sd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+/* ══ Teacher Card ═══════════════════════════════════════════════ */
+.sd-card {
+  background: #fff;
+  border: 1px solid #e6f9f2;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 2px 10px rgba(5,46,22,.06);
+  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s;
+  overflow: hidden;
+  animation: sd-card-in .3s cubic-bezier(.22,1,.36,1) both;
+  position: relative;
+}
+@keyframes sd-card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sd-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(5,46,22,.12), 0 2px 8px rgba(0,0,0,.06);
+}
+.sd-card.is-pending {
+  border-color: #fde68a;
+  box-shadow: 0 2px 10px rgba(245,158,11,.1);
+}
+.sd-card.is-pending:hover {
+  box-shadow: 0 12px 32px rgba(245,158,11,.15);
+}
+
+/* Card top accent strip */
+.sd-card-strip {
+  height: 4px;
+  background: linear-gradient(90deg, #059669, #10b981, #34d399);
+}
+.sd-card.is-pending .sd-card-strip {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24, #fde68a);
+}
+
+/* Card body */
+.sd-card-body { padding: 1.25rem; }
+
+/* Avatar + name row */
+.sd-card-top {
+  display: flex; align-items: flex-start; gap: .9rem;
+  margin-bottom: 1rem;
+}
+.sd-avatar {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; flex-shrink: 0;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border: 2px solid #6ee7b7;
+  position: relative;
+}
+.sd-card.is-pending .sd-avatar {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-color: #fbbf24;
+}
+.sd-avatar-status {
+  position: absolute; bottom: -3px; right: -3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .6rem;
+}
+.status-active-dot  { background: #10b981; }
+.status-pending-dot { background: #f59e0b; }
+
+.sd-card-name-block { flex: 1; min-width: 0; }
+.sd-card-name {
+  font-size: 1rem; font-weight: 800; color: #0d1f15;
+  font-family: 'Outfit', system-ui, sans-serif;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.sd-card-ts {
+  font-size: .75rem; color: #6b8f7a; font-weight: 600;
+  font-family: 'Outfit', system-ui, sans-serif;
+  margin-bottom: 5px;
+}
+.sd-status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 9px; border-radius: 50px;
+  font-size: .7rem; font-weight: 800;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.badge-active  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.badge-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.badge-admin   { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+
+/* Meta chips row */
+.sd-meta-chips {
+  display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .9rem;
+}
+.sd-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: .22rem .65rem; border-radius: 50px;
+  font-size: .72rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  white-space: nowrap;
+}
+.chip-role     { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.chip-class    { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.chip-subject  { background: #fdf4ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+.chip-noclass  { background: #f9fafb; color: #9ca3af; border: 1px solid #e5e7eb; }
+
+/* Subjects row */
+.sd-subjects {
+  font-size: .78rem; color: #475569;
+  line-height: 1.5; margin-bottom: .9rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* Divider */
+.sd-card-divider {
+  height: 1px; background: #f0fdf4; margin: 0 -1.25rem .9rem;
+}
+
+/* Action row */
+.sd-card-actions {
+  display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
+}
+.sd-action-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: .45rem 1rem; border-radius: 50px;
+  font-size: .78rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  border: none; cursor: pointer;
+  transition: opacity .15s, transform .15s, box-shadow .15s;
+  margin: 0; width: auto;
+}
+.sd-action-btn:hover { opacity: .88; transform: translateY(-1px); }
+.btn-access  {
+  background: linear-gradient(135deg,#065f46,#059669);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(5,150,105,.25);
+}
+.btn-approve {
+  background: linear-gradient(135deg,#059669,#10b981);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16,185,129,.2);
+}
+.btn-reject  {
+  background: linear-gradient(135deg,#dc2626,#ef4444);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(220,38,38,.2);
+}
+.btn-pending-label {
+  font-size: .75rem; color: #9ca3af; font-weight: 600;
+  font-family: 'Outfit', system-ui, sans-serif;
+}
+
+/* Pending checkbox */
+.sd-checkbox-wrap {
+  display: flex; align-items: center; gap: 6px;
+  margin-right: 4px;
+}
+.sd-checkbox-wrap input[type="checkbox"] {
+  width: 16px; height: 16px; accent-color: #059669;
+  cursor: pointer; margin: 0;
+}
+
+/* ══ Empty state ════════════════════════════════════════════════ */
+.sd-empty {
+  text-align: center; padding: 3.5rem 2rem; grid-column: 1/-1;
+  color: #9ca3af;
+}
+.sd-empty-icon { font-size: 3rem; display: block; margin-bottom: .75rem; }
+.sd-empty-title { font-size: 1.05rem; font-weight: 700; color: #374151; margin-bottom: .35rem; }
+.sd-empty-sub   { font-size: .85rem; line-height: 1.6; }
+
+  `;
+  document.head.appendChild(s);
+})();
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOAD TEACHERS  (real-time listeners, unchanged logic)
+// ═══════════════════════════════════════════════════════════════════
 function loadTeachers() {
   showLoading();
-  window._staffDirInitialLoadDone=false;
+  window._staffDirInitialLoadDone = false;
   detachTeacherListeners();
-  let latestTeacherSnap=null, latestAdmissionSnap=null;
-  const u1=onSnapshot(collection(db,'schools',schoolId,'teachers'),snap=>{
-    latestTeacherSnap=snap; if(latestAdmissionSnap) renderTeacherList(latestTeacherSnap,latestAdmissionSnap);
-  },err=>console.error('Teachers listener:',err));
-  const u2=onSnapshot(collection(db,'schools',schoolId,'admissionRequests'),snap=>{
-    latestAdmissionSnap=snap; if(latestTeacherSnap) renderTeacherList(latestTeacherSnap,latestAdmissionSnap);
-  },err=>console.error('Admission listener:',err));
-  teacherListeners.push(u1,u2);
-}
-function detachTeacherListeners(){ teacherListeners.forEach(u=>{try{u();}catch(_){}}); teacherListeners=[]; }
 
+  let latestTeacherSnap = null, latestAdmissionSnap = null;
+
+  const u1 = onSnapshot(collection(db, 'schools', schoolId, 'teachers'), snap => {
+    latestTeacherSnap = snap;
+    if (latestAdmissionSnap) renderTeacherList(latestTeacherSnap, latestAdmissionSnap);
+  }, err => console.error('Teachers listener:', err));
+
+  const u2 = onSnapshot(collection(db, 'schools', schoolId, 'admissionRequests'), snap => {
+    latestAdmissionSnap = snap;
+    if (latestTeacherSnap) renderTeacherList(latestTeacherSnap, latestAdmissionSnap);
+  }, err => console.error('Admission listener:', err));
+
+  teacherListeners.push(u1, u2);
+}
+
+function detachTeacherListeners() {
+  teacherListeners.forEach(u => { try { u(); } catch (_) {} });
+  teacherListeners = [];
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDER TEACHER LIST  — premium card grid
+// ═══════════════════════════════════════════════════════════════════
 async function renderTeacherList(teachersSnap, admissionSnap) {
-  const list=document.getElementById('teachers-list');
-  if(!list) return;
-  if(!teachersSnap)  teachersSnap  = await getDocs(collection(db,'schools',schoolId,'teachers'));
-  if(!admissionSnap) admissionSnap = await getDocs(collection(db,'schools',schoolId,'admissionRequests'));
-  const teachers=[]; const pending=[];
-  teachersSnap.forEach(d=>teachers.push({id:d.id,...d.data(),type:'active'}));
-  admissionSnap.forEach(d=>{ const data=d.data(); if(data.requestStatus==='pending') pending.push({id:d.id,...data,type:'pending'}); });
-  list.innerHTML='';
-  if(!teachers.length&&!pending.length){
-    list.innerHTML='<p class="empty-state"><i class="fas fa-users"></i> No teachers or admission requests found.</p>';
-    if(!window._staffDirInitialLoadDone){hideLoading();window._staffDirInitialLoadDone=true;}
-    return;
-  }
-  const canManage=canManageAdmissions();
-  if(pending.length>0&&canManage){
-    const bb=document.createElement('div');
-    bb.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;';
-    bb.innerHTML=`<span style="font-weight:600;">${pending.length} pending</span>
-      <button class="bulk-approve" style="background:#00cc88;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">✅ Approve Selected</button>
-      <button class="bulk-reject" style="background:#e11d48;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">❌ Reject Selected</button>
-      <span class="select-all" style="cursor:pointer;color:#00cc88;font-weight:600;">Select All</span>`;
-    list.appendChild(bb);
-    bb.querySelector('.bulk-approve').addEventListener('click',()=>bulkAdmissionAction('approve'));
-    bb.querySelector('.bulk-reject').addEventListener('click',()=>bulkAdmissionAction('reject'));
-    bb.querySelector('.select-all').addEventListener('click',selectAllPending);
-  }
-  [...teachers,...pending].forEach(entry=>{
-    const item=document.createElement('div');
-    item.classList.add('teacher-item');
-    item.dataset.name=(entry.name||'').toLowerCase();
-    item.dataset.ts=(entry.tsNumber||'').toLowerCase();
-    item.dataset.uid=entry.id;
-    // KEY FIX 2: Read assignedClasses OR classes array from teacher doc
-    const assignedClasses=entry.assignedClasses||entry.classes||[];
-    const classCount=Array.isArray(assignedClasses)?assignedClasses.length:0;
-    const badge=entry.type==='active'
-      ?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:8px;font-size:.78rem;font-weight:700;">✅ Active</span>'
-      :'<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-size:.78rem;font-weight:700;">⏳ Pending</span>';
-    let actionHtml;
-    if(entry.type==='active'){
-      actionHtml=`<button class="view-teacher-data" data-teacher-id="${entry.id}" style="width:auto;padding:8px 20px;border-radius:20px;font-size:.85rem;margin:0;"><i class="fas fa-folder-open"></i> Access Records</button>`;
-    } else if(canManage){
-      actionHtml=`<label style="display:inline-flex;align-items:center;gap:6px;margin-right:8px;"><input type="checkbox" class="pending-checkbox" value="${entry.id}" style="transform:scale(1.2);"></label>
-        <button class="approve-request" data-uid="${entry.id}" style="width:auto;padding:8px 18px;border-radius:20px;font-size:.85rem;margin-right:6px;background:#00cc88;color:white;border:none;">✅ Approve</button>
-        <button class="reject-request" data-uid="${entry.id}" style="width:auto;padding:8px 18px;border-radius:20px;font-size:.85rem;background:#e11d48;color:white;border:none;">❌ Reject</button>`;
-    } else { actionHtml='<span style="color:#94a3b8;">Pending approval</span>'; }
-    item.innerHTML=`
-      <div class="teacher-avatar">${entry.type==='pending'?'🕐':'🧑‍🏫'}</div>
-      <div style="flex:1;">
-        <p style="font-size:1.05rem;font-weight:700;margin-bottom:3px;">${entry.name||'Unknown'} ${badge}</p>
-        <p style="color:var(--muted);font-size:.85rem;margin-bottom:.5rem;">TS No: ${entry.tsNumber||'—'} &nbsp;·&nbsp; ${classCount} class${classCount!==1?'es':''} assigned</p>
-        <div style="font-size:.8rem;color:#475569;">${entry.role?`<span>📌 ${entry.role}</span>`:''} ${entry.position?`<span> • ${entry.position}</span>`:''} ${entry.subjects?.length?`<br>📚 ${entry.subjects.join(', ')}`:''}</div>
-        <div style="margin-top:6px;">${actionHtml}</div>
-      </div>`;
-    list.appendChild(item);
+  const list = document.getElementById('teachers-list');
+  if (!list) return;
+
+  if (!teachersSnap)  teachersSnap  = await getDocs(collection(db, 'schools', schoolId, 'teachers'));
+  if (!admissionSnap) admissionSnap = await getDocs(collection(db, 'schools', schoolId, 'admissionRequests'));
+
+  const teachers = [];
+  const pending  = [];
+  teachersSnap.forEach(d  => teachers.push({ id: d.id, ...d.data(), type: 'active' }));
+  admissionSnap.forEach(d => {
+    const data = d.data();
+    if (data.requestStatus === 'pending') pending.push({ id: d.id, ...data, type: 'pending' });
   });
-  document.querySelectorAll('.view-teacher-data').forEach(btn=>{
-    btn.addEventListener('click', async e=>{
-      currentTeacherId=e.currentTarget.dataset.teacherId;
-      await loadClasses();
-      showSection('class-selection',{teacherId:currentTeacherId});
+
+  // ── Stats counts ──────────────────────────────────────────────
+  const totalClasses = teachers.reduce((acc, t) => {
+    const ac = t.assignedClasses || t.classes || [];
+    return acc + (Array.isArray(ac) ? ac.length : 0);
+  }, 0);
+
+  // ── Build shell ───────────────────────────────────────────────
+  list.innerHTML = '';
+  const shell = document.createElement('div');
+  shell.className = 'sd-shell';
+
+  // ── Stats bar ─────────────────────────────────────────────────
+  const statsBar = document.createElement('div');
+  statsBar.className = 'sd-stats-bar';
+  statsBar.innerHTML = `
+    <div class="sd-stat-pill total">
+      <span>👥</span>
+      <span class="sp-val">${teachers.length + pending.length}</span>
+      <span>Total Staff</span>
+    </div>
+    <div class="sd-stat-pill active">
+      <span>✅</span>
+      <span class="sp-val">${teachers.length}</span>
+      <span>Active</span>
+    </div>
+    ${pending.length ? `
+    <div class="sd-stat-pill pending">
+      <span>⏳</span>
+      <span class="sp-val">${pending.length}</span>
+      <span>Awaiting Approval</span>
+    </div>` : ''}
+    <div class="sd-stat-pill classes">
+      <span>🏫</span>
+      <span class="sp-val">${totalClasses}</span>
+      <span>Classes Assigned</span>
+    </div>`;
+  shell.appendChild(statsBar);
+
+  // ── Pending banner ────────────────────────────────────────────
+  const canManage = canManageAdmissions();
+  if (pending.length > 0 && canManage) {
+    const banner = document.createElement('div');
+    banner.className = 'sd-pending-banner';
+    banner.innerHTML = `
+      <div class="sd-pending-banner-left">
+        <div class="sd-pending-icon">⏳</div>
+        <div>
+          <div class="sd-pending-label">Admission Queue</div>
+          <div class="sd-pending-count">
+            <strong>${pending.length}</strong> teacher request${pending.length !== 1 ? 's' : ''} awaiting your review
+          </div>
+        </div>
+      </div>
+      <div class="sd-pending-actions">
+        <button class="sd-bulk-btn select" id="sd-select-all">☑️ Select All</button>
+        <button class="sd-bulk-btn approve" id="sd-bulk-approve">✅ Approve Selected</button>
+        <button class="sd-bulk-btn reject"  id="sd-bulk-reject">❌ Reject Selected</button>
+      </div>`;
+    shell.appendChild(banner);
+
+    banner.querySelector('#sd-bulk-approve').addEventListener('click', () => bulkAdmissionAction('approve'));
+    banner.querySelector('#sd-bulk-reject').addEventListener('click',  () => bulkAdmissionAction('reject'));
+    banner.querySelector('#sd-select-all').addEventListener('click',   selectAllPending);
+  }
+
+  // ── Search + filter toolbar ───────────────────────────────────
+  const toolbar = document.createElement('div');
+  toolbar.className = 'sd-toolbar';
+  toolbar.innerHTML = `
+    <div class="sd-search-wrap">
+      <i class="fas fa-search"></i>
+      <input class="sd-search" id="teacher-search" type="text" placeholder="Search by name or TS number…">
+    </div>
+    <button class="sd-filter-btn active" data-filter="all">🧑‍🏫 All</button>
+    <button class="sd-filter-btn" data-filter="active">✅ Active</button>
+    ${pending.length ? `<button class="sd-filter-btn" data-filter="pending">⏳ Pending</button>` : ''}`;
+  shell.appendChild(toolbar);
+
+  // ── Card grid ─────────────────────────────────────────────────
+  const grid = document.createElement('div');
+  grid.className = 'sd-grid';
+  shell.appendChild(grid);
+
+  list.appendChild(shell);
+
+  // ── Render cards ──────────────────────────────────────────────
+  const allEntries = [...teachers, ...pending];
+
+  function renderCards(filter = 'all', searchQ = '') {
+    grid.innerHTML = '';
+
+    const filtered = allEntries.filter(e => {
+      const matchFilter = filter === 'all' || e.type === filter;
+      const matchSearch = !searchQ ||
+        (e.name || '').toLowerCase().includes(searchQ) ||
+        (e.tsNumber || '').toLowerCase().includes(searchQ) ||
+        (e.subjects || []).join(' ').toLowerCase().includes(searchQ);
+      return matchFilter && matchSearch;
+    });
+
+    if (!filtered.length) {
+      grid.innerHTML = `
+        <div class="sd-empty">
+          <span class="sd-empty-icon">${searchQ ? '🔍' : '👥'}</span>
+          <div class="sd-empty-title">${searchQ ? 'No results found' : 'No staff members yet'}</div>
+          <div class="sd-empty-sub">${searchQ ? `No staff match "${searchQ}". Try a different search.` : 'Teachers who join using your school code will appear here.'}</div>
+        </div>`;
+      return;
+    }
+
+    filtered.forEach((entry, i) => {
+      const isPending     = entry.type === 'pending';
+      const assignedCls   = entry.assignedClasses || entry.classes || [];
+      const classCount    = Array.isArray(assignedCls) ? assignedCls.length : 0;
+      const subjects      = Array.isArray(entry.subjects) ? entry.subjects : [];
+      const isAdmin       = ['admin','head_of_department','deputy_headteacher'].includes((entry.role||'').toLowerCase());
+
+      // Avatar emoji — role-based
+      const avatarEmoji = isPending ? '🕐'
+        : isAdmin ? '👑'
+        : classCount > 3 ? '🌟'
+        : '🧑‍🏫';
+
+      // Status badge
+      const statusBadge = isPending
+        ? '<span class="sd-status-badge badge-pending">⏳ Pending</span>'
+        : isAdmin
+          ? '<span class="sd-status-badge badge-admin">👑 Admin</span>'
+          : '<span class="sd-status-badge badge-active">✅ Active</span>';
+
+      // Meta chips
+      let chips = '';
+      if (entry.position) chips += `<span class="sd-chip chip-role">📌 ${entry.position}</span>`;
+      if (classCount > 0) {
+        chips += `<span class="sd-chip chip-class">🏫 ${classCount} class${classCount !== 1 ? 'es' : ''}</span>`;
+      } else {
+        chips += `<span class="sd-chip chip-noclass">📭 No classes yet</span>`;
+      }
+
+      // Subject chips (max 2 shown)
+      subjects.slice(0, 2).forEach(sub => {
+        chips += `<span class="sd-chip chip-subject">📚 ${sub}</span>`;
+      });
+      if (subjects.length > 2) {
+        chips += `<span class="sd-chip chip-subject">+${subjects.length - 2} more</span>`;
+      }
+
+      // Action buttons
+      let actions = '';
+      if (!isPending) {
+        actions = `<button class="sd-action-btn btn-access view-teacher-data" data-teacher-id="${entry.id}">
+          <i class="fas fa-folder-open"></i> Open Records
+        </button>`;
+      } else if (canManage) {
+        actions = `
+          <label class="sd-checkbox-wrap">
+            <input type="checkbox" class="pending-checkbox" value="${entry.id}">
+          </label>
+          <button class="sd-action-btn btn-approve approve-request" data-uid="${entry.id}">
+            ✅ Approve
+          </button>
+          <button class="sd-action-btn btn-reject reject-request" data-uid="${entry.id}">
+            ❌ Reject
+          </button>`;
+      } else {
+        actions = `<span class="btn-pending-label">⏳ Awaiting admin review</span>`;
+      }
+
+      const card = document.createElement('div');
+      card.className = `sd-card${isPending ? ' is-pending' : ''}`;
+      card.dataset.name = (entry.name || '').toLowerCase();
+      card.dataset.ts   = (entry.tsNumber || '').toLowerCase();
+      card.dataset.type = entry.type;
+      card.style.animationDelay = `${i * 45}ms`;
+
+      card.innerHTML = `
+        <div class="sd-card-strip"></div>
+        <div class="sd-card-body">
+          <div class="sd-card-top">
+            <div class="sd-avatar">
+              ${avatarEmoji}
+              <span class="sd-avatar-status ${isPending ? 'status-pending-dot' : 'status-active-dot'}"></span>
+            </div>
+            <div class="sd-card-name-block">
+              <div class="sd-card-name">${entry.name || 'Unknown Teacher'}</div>
+              <div class="sd-card-ts">🪪 TS: ${entry.tsNumber || '—'} &nbsp;·&nbsp; 📧 ${entry.email || '—'}</div>
+              ${statusBadge}
+            </div>
+          </div>
+
+          <div class="sd-meta-chips">${chips}</div>
+
+          ${subjects.length ? `<div class="sd-subjects">📖 ${subjects.join(' · ')}</div>` : ''}
+
+          <div class="sd-card-divider"></div>
+
+          <div class="sd-card-actions">${actions}</div>
+        </div>`;
+
+      grid.appendChild(card);
+    });
+
+    // Wire events
+    grid.querySelectorAll('.view-teacher-data').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        currentTeacherId = e.currentTarget.dataset.teacherId;
+        await loadClasses();
+        showSection('class-selection', { teacherId: currentTeacherId });
+      });
+    });
+    grid.querySelectorAll('.approve-request').forEach(btn =>
+      btn.addEventListener('click', e => handleAdmissionAction(e.currentTarget.dataset.uid, 'approve'))
+    );
+    grid.querySelectorAll('.reject-request').forEach(btn =>
+      btn.addEventListener('click', e => handleAdmissionAction(e.currentTarget.dataset.uid, 'reject'))
+    );
+  }
+
+  // Initial render
+  renderCards();
+
+  // ── Filter buttons ────────────────────────────────────────────
+  toolbar.querySelectorAll('.sd-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toolbar.querySelectorAll('.sd-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const searchQ = document.getElementById('teacher-search')?.value.toLowerCase().trim() || '';
+      renderCards(btn.dataset.filter, searchQ);
     });
   });
-  document.querySelectorAll('.approve-request').forEach(btn=>btn.addEventListener('click',e=>handleAdmissionAction(e.currentTarget.dataset.uid,'approve')));
-  document.querySelectorAll('.reject-request').forEach(btn=>btn.addEventListener('click',e=>handleAdmissionAction(e.currentTarget.dataset.uid,'reject')));
-  const si=document.getElementById('teacher-search');
-  if(si){ si.removeEventListener('input',filterTeacherList); si.addEventListener('input',filterTeacherList); }
+
+  // ── Search ────────────────────────────────────────────────────
+  const searchEl = document.getElementById('teacher-search');
+  if (searchEl) {
+    searchEl.addEventListener('input', e => {
+      const q      = e.target.value.toLowerCase().trim();
+      const filter = toolbar.querySelector('.sd-filter-btn.active')?.dataset.filter || 'all';
+      renderCards(filter, q);
+    });
+  }
+
   bulkSelection.clear();
-  if(!window._staffDirInitialLoadDone){hideLoading();window._staffDirInitialLoadDone=true;}
+  if (!window._staffDirInitialLoadDone) { hideLoading(); window._staffDirInitialLoadDone = true; }
 }
-function filterTeacherList(e){
-  const q=e.target.value.toLowerCase();
-  document.querySelectorAll('.teacher-item').forEach(item=>{
-    item.style.display=(item.dataset.name.includes(q)||item.dataset.ts.includes(q))?'flex':'none';
+
+function filterTeacherList(e) {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.sd-card').forEach(card => {
+    card.style.display =
+      (card.dataset.name.includes(q) || card.dataset.ts.includes(q)) ? '' : 'none';
   });
 }
-function canManageAdmissions(){ return currentUser&&['head_of_department','deputy_headteacher','headteacher'].includes(currentUser.role); }
 
-async function handleAdmissionAction(uid,action){
-  if(!confirm(`Are you sure you want to ${action} this request?`)) return;
-  showLoading();
-  try { await _processAdmissionAction(uid,action); alert(action==='approve'?'✅ Teacher approved.':'❌ Request rejected.'); }
-  catch(e){ alert(`Action failed: ${e.message}`); } finally { hideLoading(); }
+function canManageAdmissions() {
+  return currentUser && ['head_of_department','deputy_headteacher','headteacher'].includes(currentUser.role);
 }
-async function _processAdmissionAction(uid,action){
-  const admRef=doc(db,'schools',schoolId,'admissionRequests',uid);
-  const snap=await getDoc(admRef);
-  if(!snap.exists()) throw new Error('Request no longer exists.');
-  const data=snap.data();
-  if(action==='approve'){
-    const clean=obj=>Object.fromEntries(Object.entries(obj).filter(([_,v])=>v!==undefined));
-    const td=clean({uid,name:data.name||'',email:data.email||'',phone:data.phone||'',tsNumber:data.tsNumber||'',role:data.role||'teacher',position:data.position||'',subjects:Array.isArray(data.subjects)?data.subjects:[],profilePictureURL:data.profilePictureURL||'',approvedAt:serverTimestamp(),classes:[],assignedClasses:[]});
-    await setDoc(doc(db,'schools',schoolId,'teachers',uid),td,{merge:true});
-    await updateDoc(doc(db,'users',uid),{accountStatus:'active',approved:true});
-    await updateDoc(admRef,{requestStatus:'approved',processedAt:serverTimestamp(),processedBy:currentUser.uid});
-    await addDoc(collection(db,'users',uid,'notifications'),{title:'Admission Approved!',body:`Welcome to ${data.schoolName||'the school'}! Your account is now active.`,read:false,createdAt:serverTimestamp()});
-    await addDoc(collection(db,'schools',schoolId,'auditLog'),{action:'teacher_approved',targetUid:uid,performedBy:currentUser.uid,performedByName:currentUser.name||'Headteacher',timestamp:serverTimestamp()});
+
+async function handleAdmissionAction(uid, action) {
+  if (!confirm(`Are you sure you want to ${action} this request?`)) return;
+  showLoading();
+  try {
+    await _processAdmissionAction(uid, action);
+    alert(action === 'approve' ? '✅ Teacher approved.' : '❌ Request rejected.');
+  } catch(e) { alert(`Action failed: ${e.message}`); }
+  finally { hideLoading(); }
+}
+
+async function _processAdmissionAction(uid, action) {
+  const admRef = doc(db, 'schools', schoolId, 'admissionRequests', uid);
+  const snap   = await getDoc(admRef);
+  if (!snap.exists()) throw new Error('Request no longer exists.');
+  const data = snap.data();
+
+  if (action === 'approve') {
+    const clean = obj => Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+    const td = clean({
+      uid, name: data.name||'', email: data.email||'', phone: data.phone||'',
+      tsNumber: data.tsNumber||'', role: data.role||'teacher',
+      position: data.position||'', subjects: Array.isArray(data.subjects)?data.subjects:[],
+      profilePictureURL: data.profilePictureURL||'',
+      approvedAt: serverTimestamp(), classes: [], assignedClasses: []
+    });
+    await setDoc(doc(db, 'schools', schoolId, 'teachers', uid), td, { merge: true });
+    await updateDoc(doc(db, 'users', uid), { accountStatus: 'active', approved: true });
+    await updateDoc(admRef, { requestStatus:'approved', processedAt:serverTimestamp(), processedBy:currentUser.uid });
+    await addDoc(collection(db,'users',uid,'notifications'), {
+      title: 'Admission Approved! 🎉',
+      body:  `Welcome to ${data.schoolName||'the school'}! Your account is now active.`,
+      read: false, createdAt: serverTimestamp()
+    });
+    await addDoc(collection(db,'schools',schoolId,'auditLog'), {
+      action:'teacher_approved', targetUid:uid,
+      performedBy:currentUser.uid, performedByName:currentUser.name||'Headteacher',
+      timestamp:serverTimestamp()
+    });
   } else {
-    await updateDoc(admRef,{requestStatus:'rejected',processedAt:serverTimestamp(),processedBy:currentUser.uid});
-    await updateDoc(doc(db,'users',uid),{accountStatus:'rejected',approved:false});
-    await addDoc(collection(db,'users',uid,'notifications'),{title:'Admission Declined',body:'Your request has been declined. Please contact the school.',read:false,createdAt:serverTimestamp()});
-    await addDoc(collection(db,'schools',schoolId,'auditLog'),{action:'teacher_rejected',targetUid:uid,performedBy:currentUser.uid,performedByName:currentUser.name||'Headteacher',timestamp:serverTimestamp()});
+    await updateDoc(admRef, { requestStatus:'rejected', processedAt:serverTimestamp(), processedBy:currentUser.uid });
+    await updateDoc(doc(db,'users',uid), { accountStatus:'rejected', approved:false });
+    await addDoc(collection(db,'users',uid,'notifications'), {
+      title: 'Admission Declined',
+      body:  'Your request has been declined. Please contact the school.',
+      read: false, createdAt: serverTimestamp()
+    });
+    await addDoc(collection(db,'schools',schoolId,'auditLog'), {
+      action:'teacher_rejected', targetUid:uid,
+      performedBy:currentUser.uid, performedByName:currentUser.name||'Headteacher',
+      timestamp:serverTimestamp()
+    });
   }
 }
-function selectAllPending(){ document.querySelectorAll('.pending-checkbox').forEach(cb=>{cb.checked=true;bulkSelection.add(cb.value);}); }
-async function bulkAdmissionAction(action){
-  const uids=Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb=>cb.value);
-  if(!uids.length){alert('Select at least one.');return;}
-  if(!confirm(`${action} ${uids.length} request(s)?`)) return;
-  showLoading(); let processed=0;
-  for(const uid of uids){ try{await _processAdmissionAction(uid,action);processed++;}catch(e){console.warn(e.message);} }
-  hideLoading(); alert(`${action==='approve'?'Approved':'Rejected'} ${processed}/${uids.length} request(s).`);
+
+function selectAllPending() {
+  document.querySelectorAll('.pending-checkbox').forEach(cb => {
+    cb.checked = true; bulkSelection.add(cb.value);
+  });
 }
+
+async function bulkAdmissionAction(action) {
+  const uids = Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb => cb.value);
+  if (!uids.length) { alert('Select at least one request first.'); return; }
+  if (!confirm(`${action === 'approve' ? 'Approve' : 'Reject'} ${uids.length} request(s)?`)) return;
+  showLoading();
+  let processed = 0;
+  for (const uid of uids) {
+    try { await _processAdmissionAction(uid, action); processed++; }
+    catch(e) { console.warn(e.message); }
+  }
+  hideLoading();
+  alert(`${action === 'approve' ? '✅ Approved' : '❌ Rejected'} ${processed}/${uids.length} request(s).`);
+}
+
 window.addEventListener('beforeunload', detachTeacherListeners);
+
 
 // ═══════════════════════════════════════
 // KEY FIX 2: loadClasses()
@@ -1362,13 +1926,10 @@ if(section==='students'){
 
       // KEY FIX: Query without term filter — filter in JS to handle all formats
       
+
+// AFTER (correct):
 const q = query(
-  collection(
-    db,
-    'schools',
-    schoolId,
-    'attendanceHistory'
-  ),
+  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'attendanceHistory'),
   where('classId', 'in', variants)
 );
       
@@ -1416,15 +1977,12 @@ const q = query(
     
     else if (section === 'results') {
   
-  const q = query(
-    collection(
-      db,
-      'schools',
-      schoolId,
-      'results'
-    ),
-    where('classId', 'in', variants)
-  );
+  // AFTER (correct):
+const q = query(
+  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'),
+  where('classId', 'in', variants)
+);
+  
   
   const data = await getDocs(q);
     
@@ -1458,97 +2016,157 @@ const q = query(
       });
     }
 
-    // ── FEES ──────────────────────────────────
-    
-    else if (section === 'fees') {
+// ── FEES ──────────────────────────────────
+else if (section === 'fees') {
   
-  const configRef = doc(
-    db,
-    'schools',
-    schoolId,
-    'feesConfig',
-    selectedClassId
-  );
+  // CORRECT PATH: schools/{schoolId}/teachers/{teacherId}/feesConfig/{classId}
+  // CORRECT FIELD: totalAmount
+  let totalFee = 0;
   
-  const configSnap = await getDoc(configRef);
-  const totalFee = configSnap.exists() ?
-    configSnap.data().totalFee || 0 :
-    0;
+  for (const v of variants) {
+    if (totalFee > 0) break;
+    try {
+      const snap = await getDoc(
+        doc(db, 'schools', schoolId, 'teachers', currentTeacherId, 'feesConfig', v)
+      );
+      if (snap.exists()) {
+        const data = snap.data();
+        totalFee = Number(data.totalAmount || data.totalFee || data.amount || 0);
+        console.log(`[Fees] ✅ Found at teacher/feesConfig/${v}: K${totalFee}`);
+      }
+    } catch (e) { console.warn(`[Fees] variant "${v}" failed:`, e.message); }
+  }
   
-  // Students are stored at schools/{schoolId}/students
+  console.log(`[Fees] Final totalFee for "${selectedClassId}": K${totalFee}`);
+  
+  // ── Students at school level ──────────────────────────────────
   const studQ = query(
-    collection(
-      db,
-      'schools',
-      schoolId,
-      'students'
-    ),
+    collection(db, 'schools', schoolId, 'students'),
     where('classId', 'in', variants)
   );
-  
   const studSnap = await getDocs(studQ);
-  
   const studMap = new Map();
   studSnap.forEach(ds => studMap.set(ds.id, ds.data()));
   
   const expectedTotal = totalFee * studMap.size;
   
-  // Fees are stored at schools/{schoolId}/fees
+  // ── Fee payments at teacher subcollection level ───────────────
   const feesQ = query(
-    collection(
-      db,
-      'schools',
-      schoolId,
-      'fees'
-    ),
+    collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'fees'),
     where('classId', 'in', variants)
   );
-  
   const feesData = await getDocs(feesQ);
-    
-    
-      const ov=document.createElement('div');
-      ov.style.cssText='margin-bottom:1.5rem;background:var(--g50);padding:1.25rem;border-radius:var(--radius);border:1px solid var(--wire);';
-      ov.innerHTML=`<h3 style="margin-bottom:.75rem;"><i class="fas fa-bullseye" style="color:var(--g600);"></i> Class Target Fee: <span style="color:var(--g600);font-weight:800;">K${totalFee}</span> <span style="font-size:.85rem;color:var(--muted);"> / student</span></h3>
-        <input id="fees-filter" class="search-input" type="text" placeholder="🔍 Find student financial record…" style="margin:0;">`;
-      content.appendChild(ov);
-      if(feesData.empty){ content.innerHTML+='<p class="empty-state"><i class="fas fa-money-bill-wave"></i> No financial transactions recorded yet.</p>'; return; }
-      const spMap=new Map(); let totalCollected=0;
-      feesData.forEach(ds=>{
-        const d=ds.data(); const sid=d.studentId||d.id||ds.id;
-        if(!spMap.has(sid)) spMap.set(sid,[]);
-        const sd=d.syncedAt?fmtDateTime(parseFirestoreDate(d.syncedAt)):'Pending';
-        if(Array.isArray(d.payments)){ d.payments.forEach(p=>{ const a=Number(p.amount)||0; spMap.get(sid).push({date:p.date||'N/A',amount:a,status:p.status||'Paid',syncedAt:sd}); totalCollected+=a; }); }
-        else if(d.amount){ const a=Number(d.amount)||0; spMap.get(sid).push({date:d.date||'N/A',amount:a,status:d.status||'Paid',syncedAt:sd}); totalCollected+=a; }
+  
+  // ── Render header ─────────────────────────────────────────────
+  const ov = document.createElement('div');
+  ov.style.cssText = 'margin-bottom:1.5rem;background:var(--g50);padding:1.25rem;border-radius:var(--radius);border:1px solid var(--wire);';
+  ov.innerHTML = `
+    <h3 style="margin-bottom:.75rem;">
+      <i class="fas fa-bullseye" style="color:var(--g600);"></i>
+      Class Target Fee: <span style="color:var(--g600);font-weight:800;">K${totalFee}</span>
+      <span style="font-size:.85rem;color:var(--muted);"> / student</span>
+      ${totalFee === 0 ? '<span style="margin-left:10px;font-size:.78rem;color:var(--red);background:#fef2f2;padding:3px 10px;border-radius:20px;border:1px solid #fecaca;">⚠️ No fee config found</span>' : ''}
+    </h3>
+    <input id="fees-filter" class="search-input" type="text" placeholder="🔍 Find student financial record…" style="margin:0;">`;
+  content.appendChild(ov);
+  
+  if (feesData.empty) {
+    content.innerHTML += '<p class="empty-state"><i class="fas fa-money-bill-wave"></i> No financial transactions recorded yet.</p>';
+    return;
+  }
+  
+  // ── Build payments map ────────────────────────────────────────
+  const spMap = new Map();
+  let totalCollected = 0;
+  
+  feesData.forEach(ds => {
+    const d = ds.data();
+    const sid = d.studentId || d.id || ds.id;
+    if (!spMap.has(sid)) spMap.set(sid, []);
+    const sd = d.syncedAt ? fmtDateTime(parseFirestoreDate(d.syncedAt)) : 'Pending';
+    if (Array.isArray(d.payments)) {
+      d.payments.forEach(p => {
+        const a = Number(p.amount) || 0;
+        spMap.get(sid).push({ date: p.date || 'N/A', amount: a, status: p.status || 'Paid', syncedAt: sd });
+        totalCollected += a;
       });
-      const out=expectedTotal-totalCollected;
-      const pct=expectedTotal>0?((totalCollected/expectedTotal)*100).toFixed(1):0;
-      const sumDiv=document.createElement('div');
-      sumDiv.style.cssText='margin-bottom:1.5rem;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;';
-      sumDiv.innerHTML=`
-        <div style="background:var(--white);border:1px solid var(--wire);border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Expected</p><p style="font-size:1.5rem;">K${expectedTotal}</p></div>
-        <div style="background:var(--g50);border:1px solid var(--g100);border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Collected</p><p style="font-size:1.5rem;color:var(--g600);">K${totalCollected}</p></div>
-        <div style="background:${out>0?'#fef2f2':'var(--g50)'};border:1px solid ${out>0?'#fecaca':'var(--g100)'};border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Outstanding</p><p style="font-size:1.5rem;color:${out>0?'var(--red)':'var(--g600)'};">K${out>0?out:0}</p></div>
-        <div style="background:var(--white);border:1px solid var(--wire);border-radius:var(--radius);padding:1.1rem;text-align:center;"><p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Collection Rate</p><p style="font-size:1.5rem;color:var(--blue);">${pct}%</p></div>`;
-      content.appendChild(sumDiv);
-      studMap.forEach((student,studentId)=>{
-        const payments=(spMap.get(studentId)||[]).sort((a,b)=>new Date(b.date)-new Date(a.date));
-        const card=document.createElement('div'); card.className='student-fees-card'; card.dataset.studentName=(student.name||'').toLowerCase();
-        const h3=document.createElement('h3'); h3.style.cssText='margin-bottom:.75rem;font-size:1.1rem;';
-        h3.innerHTML=`<i class="fas fa-user-circle" style="color:var(--muted);margin-right:8px;"></i>${student.name||'Unknown'} <span style="font-size:.82rem;color:var(--muted);">(ID: ${studentId})</span>`;
-        card.appendChild(h3);
-        const tc=createTable(['Date','Status','Amount Paid','Cloud Sync','Running Total']);
-        let running=0;
-        payments.forEach(p=>{ running+=p.amount; addRow(tc,[fmtDate(p.date),`<span style="background:var(--g50);color:var(--g600);padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700;border:1px solid var(--g100);">${p.status}</span>`,`K${p.amount}`,p.syncedAt,`K${running}`]); });
-        card.appendChild(tc); makeSortable(tc);
-        const bal=totalFee-running;
-        const fd=document.createElement('div');
-        fd.style.cssText=`margin-top:1rem;padding:12px 16px;background:${bal>0?'#fef2f2':'var(--g50)'};border-radius:8px;display:flex;justify-content:space-between;font-weight:700;font-size:.9rem;`;
-        fd.innerHTML=`<span>Total Paid: <span style="color:var(--g600);font-size:1.1rem;">K${running}</span></span><span>Balance: <span style="color:${bal>0?'var(--red)':'var(--g600)'};font-size:1.1rem;">K${bal>0?bal:0}</span></span>`;
-        card.appendChild(fd); content.appendChild(card);
-      });
-      setTimeout(()=>{ const fi=document.getElementById('fees-filter'); if(fi) fi.addEventListener('input',e=>{ const q=e.target.value.toLowerCase().trim(); document.querySelectorAll('.student-fees-card').forEach(c=>{c.style.display=c.dataset.studentName.includes(q)?'block':'none';}); }); },100);
+    } else if (d.amount) {
+      const a = Number(d.amount) || 0;
+      spMap.get(sid).push({ date: d.date || 'N/A', amount: a, status: d.status || 'Paid', syncedAt: sd });
+      totalCollected += a;
     }
+  });
+  
+  const out = expectedTotal - totalCollected;
+  const pct = expectedTotal > 0 ? ((totalCollected / expectedTotal) * 100).toFixed(1) : 0;
+  
+  // ── Summary cards ─────────────────────────────────────────────
+  const sumDiv = document.createElement('div');
+  sumDiv.style.cssText = 'margin-bottom:1.5rem;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;';
+  sumDiv.innerHTML = `
+    <div style="background:var(--white);border:1px solid var(--wire);border-radius:var(--radius);padding:1.1rem;text-align:center;">
+      <p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Expected</p>
+      <p style="font-size:1.5rem;">K${expectedTotal}</p>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:3px;">${studMap.size} students × K${totalFee}</p>
+    </div>
+    <div style="background:var(--g50);border:1px solid var(--g100);border-radius:var(--radius);padding:1.1rem;text-align:center;">
+      <p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Collected</p>
+      <p style="font-size:1.5rem;color:var(--g600);">K${totalCollected}</p>
+    </div>
+    <div style="background:${out > 0 ? '#fef2f2' : 'var(--g50)'};border:1px solid ${out > 0 ? '#fecaca' : 'var(--g100)'};border-radius:var(--radius);padding:1.1rem;text-align:center;">
+      <p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Outstanding</p>
+      <p style="font-size:1.5rem;color:${out > 0 ? 'var(--red)' : 'var(--g600)'};">K${out > 0 ? out : 0}</p>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--wire);border-radius:var(--radius);padding:1.1rem;text-align:center;">
+      <p style="color:var(--muted);font-size:.78rem;font-weight:700;margin-bottom:4px;text-transform:uppercase;">Collection Rate</p>
+      <p style="font-size:1.5rem;color:var(--blue);">${pct}%</p>
+    </div>`;
+  content.appendChild(sumDiv);
+  
+  // ── Per-student fee cards ─────────────────────────────────────
+  studMap.forEach((student, studentId) => {
+    const payments = (spMap.get(studentId) || []).sort((a, b) => new Date(b.date) - new Date(a.date));
+    const card = document.createElement('div');
+    card.className = 'student-fees-card';
+    card.dataset.studentName = (student.name || '').toLowerCase();
+    const h3 = document.createElement('h3');
+    h3.style.cssText = 'margin-bottom:.75rem;font-size:1.1rem;';
+    h3.innerHTML = `<i class="fas fa-user-circle" style="color:var(--muted);margin-right:8px;"></i>${student.name || 'Unknown'} <span style="font-size:.82rem;color:var(--muted);">(ID: ${studentId})</span>`;
+    card.appendChild(h3);
+    const tc = createTable(['Date', 'Status', 'Amount Paid', 'Cloud Sync', 'Running Total']);
+    let running = 0;
+    payments.forEach(p => {
+      running += p.amount;
+      addRow(tc, [
+        fmtDate(p.date),
+        `<span style="background:var(--g50);color:var(--g600);padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700;border:1px solid var(--g100);">${p.status}</span>`,
+        `K${p.amount}`,
+        p.syncedAt,
+        `K${running}`
+      ]);
+    });
+    card.appendChild(tc);
+    makeSortable(tc);
+    const bal = totalFee - running;
+    const fd = document.createElement('div');
+    fd.style.cssText = `margin-top:1rem;padding:12px 16px;background:${bal > 0 ? '#fef2f2' : 'var(--g50)'};border-radius:8px;display:flex;justify-content:space-between;font-weight:700;font-size:.9rem;`;
+    fd.innerHTML = `<span>Total Paid: <span style="color:var(--g600);font-size:1.1rem;">K${running}</span></span><span>Balance: <span style="color:${bal > 0 ? 'var(--red)' : 'var(--g600)'};font-size:1.1rem;">K${bal > 0 ? bal : 0}</span></span>`;
+    card.appendChild(fd);
+    content.appendChild(card);
+  });
+  
+  // ── Search filter ─────────────────────────────────────────────
+  setTimeout(() => {
+    const fi = document.getElementById('fees-filter');
+    if (fi) fi.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('.student-fees-card').forEach(c => {
+        c.style.display = c.dataset.studentName.includes(q) ? 'block' : 'none';
+      });
+    });
+  }, 100);
+}
+
   } catch(e) {
     content.innerHTML=`<p class="empty-state"><i class="fas fa-exclamation-triangle"></i> System Error: ${e.message}</p>`;
     console.error('loadSectionData error:',e);
@@ -1737,81 +2355,746 @@ async function loadDashboardCharts(){
   new Chart(document.getElementById('schoolTrendChart'),{type:'line',data:{labels:['Week 1','Week 2','Week 3','Week 4'],datasets:[{label:'School Attendance %',data:[85,90,88,92],borderColor:'#059669',borderWidth:3,tension:.4,fill:true,backgroundColor:'rgba(16,185,129,.08)',pointBackgroundColor:'#059669',pointRadius:5}]},options:{responsive:true,plugins:{legend:{display:true},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y}%`}}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},x:{grid:{display:false}}}}});
 }
 
-// ─── UPDATES ──────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+//  TEACHMATE 3.0 — PREMIUM UPDATES MODULE
+//  Drop-in replacement for the checkForUpdates / showUpdatesModal block
+//  Paste this entire block in place of your existing updates section.
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── CSS: Inject once ─────────────────────────────────────────────
+(function injectUpdatesStyles() {
+  if (document.getElementById('tm-updates-css')) return;
+  const style = document.createElement('style');
+  style.id = 'tm-updates-css';
+  style.textContent = `
+
+/* ── Modal Overlay ────────────────────────────────────────────── */
+#updates-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(3, 20, 12, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+  overflow-y: auto;
+  animation: um-fade-in .2s ease;
+}
+@keyframes um-fade-in { from { opacity: 0 } to { opacity: 1 } }
+
+/* ── Shell ─────────────────────────────────────────────────────── */
+.um-shell {
+  background: #fff;
+  border-radius: 22px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow:
+    0 0 0 1px rgba(5, 150, 105, .1),
+    0 24px 60px rgba(0,0,0,.22),
+    0 8px 20px rgba(0,0,0,.1);
+  overflow: hidden;
+  animation: um-slide-up .32s cubic-bezier(.22,1,.36,1);
+  position: relative;
+}
+@keyframes um-slide-up {
+  from { transform: translateY(36px); opacity: 0 }
+  to   { transform: translateY(0);    opacity: 1 }
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.um-header {
+  background: linear-gradient(135deg, #052e16 0%, #065f46 55%, #059669 100%);
+  padding: 1.75rem 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.um-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 80% 50%, rgba(52,211,153,.18) 0%, transparent 65%);
+}
+.um-header::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+}
+.um-header-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  position: relative; z-index: 1;
+  margin-bottom: .9rem;
+}
+.um-header-icon {
+  width: 46px; height: 46px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.um-header-text { flex: 1; padding: 0 1rem; }
+.um-header-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: .2rem;
+}
+.um-header-subtitle {
+  font-size: .8rem;
+  color: rgba(255,255,255,.6);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 500;
+}
+.um-close-btn {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.8);
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, transform .2s;
+  flex-shrink: 0;
+  margin: 0; padding: 0; box-shadow: none; width: 36px;
+}
+.um-close-btn:hover {
+  background: rgba(220,38,38,.55);
+  border-color: rgba(220,38,38,.4);
+  transform: rotate(90deg);
+}
+
+/* ── Summary Chips Row ─────────────────────────────────────────── */
+.um-chips {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  position: relative; z-index: 1;
+}
+.um-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .3rem .75rem;
+  border-radius: 50px;
+  font-size: .75rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  letter-spacing: .02em;
+}
+.um-chip.chip-total   { background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.um-chip.chip-student { background: rgba(110,231,183,.2);  color: #6ee7b7; border: 1px solid rgba(110,231,183,.25); }
+.um-chip.chip-att     { background: rgba(147,197,253,.2);  color: #93c5fd; border: 1px solid rgba(147,197,253,.25); }
+.um-chip.chip-fees    { background: rgba(253,224,71,.2);   color: #fde047; border: 1px solid rgba(253,224,71,.25); }
+.um-chip.chip-results { background: rgba(249,168,212,.2);  color: #f9a8d4; border: 1px solid rgba(249,168,212,.25); }
+.um-chip.chip-empty   { background: rgba(255,255,255,.08); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.1); }
+
+/* ── Toolbar (filter tabs) ─────────────────────────────────────── */
+.um-toolbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: .85rem 1.5rem;
+  background: #f8fffe;
+  border-bottom: 1px solid #e6f9f2;
+  flex-wrap: wrap;
+}
+.um-filter-btn {
+  padding: .35rem .85rem;
+  border-radius: 50px;
+  border: 1.5px solid #d1fae5;
+  background: transparent;
+  color: #3d5247;
+  font-size: .78rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  cursor: pointer;
+  transition: all .18s;
+  display: flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+  margin: 0; box-shadow: none; width: auto;
+}
+.um-filter-btn:hover { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; transform: none; }
+.um-filter-btn.active { background: linear-gradient(135deg,#065f46,#059669); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(5,150,105,.25); }
+
+.um-toolbar-right { margin-left: auto; }
+.um-mark-read-btn {
+  padding: .35rem .9rem;
+  border-radius: 50px;
+  background: transparent;
+  border: 1.5px solid #d1d5db;
+  color: #6b7280;
+  font-size: .75rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all .18s;
+  margin: 0; box-shadow: none; width: auto;
+}
+.um-mark-read-btn:hover { border-color: #059669; color: #059669; background: #f0fdf4; transform: none; }
+
+/* ── Feed ──────────────────────────────────────────────────────── */
+.um-feed {
+  padding: 1.25rem 1.5rem;
+  display: flex; flex-direction: column; gap: .6rem;
+  max-height: 420px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.um-feed::-webkit-scrollbar { width: 5px; }
+.um-feed::-webkit-scrollbar-track { background: transparent; }
+.um-feed::-webkit-scrollbar-thumb { background: #d1fae5; border-radius: 99px; }
+
+/* ── Update Row ────────────────────────────────────────────────── */
+.um-row {
+  display: flex; align-items: flex-start; gap: .85rem;
+  padding: .9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e6f9f2;
+  background: #f8fffe;
+  transition: background .15s, transform .15s, box-shadow .15s;
+  animation: um-row-in .25s cubic-bezier(.22,1,.36,1) both;
+  position: relative;
+  overflow: hidden;
+}
+.um-row::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 99px 0 0 99px;
+}
+.um-row.type-students::before { background: #10b981; }
+.um-row.type-attendance::before { background: #3b82f6; }
+.um-row.type-fees::before { background: #f59e0b; }
+.um-row.type-results::before { background: #ec4899; }
+
+@keyframes um-row-in {
+  from { opacity: 0; transform: translateY(8px) }
+  to   { opacity: 1; transform: translateY(0) }
+}
+.um-row:hover { background: #ecfdf5; box-shadow: 0 2px 12px rgba(5,150,105,.08); transform: translateX(2px); }
+
+.um-row-icon {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+.type-students  .um-row-icon { background: rgba(16,185,129,.12); }
+.type-attendance .um-row-icon { background: rgba(59,130,246,.12); }
+.type-fees      .um-row-icon { background: rgba(245,158,11,.12); }
+.type-results   .um-row-icon { background: rgba(236,72,153,.12); }
+
+.um-row-body { flex: 1; min-width: 0; }
+.um-row-teacher {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .72rem; font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg,#064e3b,#065f46);
+  padding: 2px 9px; border-radius: 6px;
+  margin-bottom: 4px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.um-row-class {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: .7rem; font-weight: 700;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 2px 8px; border-radius: 6px;
+  margin-left: 5px;
+}
+.um-row-message {
+  font-size: .88rem; color: #1a3326; line-height: 1.5;
+  font-family: 'Outfit', system-ui, sans-serif;
+  margin-top: 3px;
+}
+.um-row-message strong { color: #047857; }
+
+.um-row-meta {
+  display: flex; align-items: center; gap: .75rem;
+  margin-top: 5px; flex-wrap: wrap;
+}
+.um-row-time {
+  font-size: .73rem; color: #9ca3af;
+  display: flex; align-items: center; gap: 3px;
+  font-family: 'Outfit', system-ui, sans-serif;
+}
+.um-row-delta {
+  font-size: .72rem; font-weight: 700;
+  padding: 1px 7px; border-radius: 99px;
+}
+.delta-up   { background: #dcfce7; color: #166534; }
+.delta-info { background: #dbeafe; color: #1e40af; }
+.delta-warn { background: #fef3c7; color: #92400e; }
+
+/* ── Empty State ───────────────────────────────────────────────── */
+.um-empty {
+  text-align: center; padding: 3rem 2rem;
+  color: #9ca3af;
+}
+.um-empty-icon { font-size: 2.5rem; margin-bottom: .75rem; display: block; }
+.um-empty-title { font-size: 1rem; font-weight: 700; color: #374151; margin-bottom: .35rem; }
+.um-empty-sub   { font-size: .85rem; line-height: 1.5; }
+
+/* ── Footer ────────────────────────────────────────────────────── */
+.um-footer {
+  padding: .9rem 1.5rem;
+  background: #f8fffe;
+  border-top: 1px solid #e6f9f2;
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  flex-wrap: wrap;
+}
+.um-footer-info {
+  font-size: .78rem; color: #9ca3af;
+  font-family: 'Outfit', system-ui, sans-serif;
+}
+.um-ack-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: .55rem 1.25rem;
+  background: linear-gradient(135deg,#065f46,#059669);
+  color: #fff;
+  border: none; border-radius: 50px;
+  font-size: .82rem; font-weight: 700;
+  font-family: 'Outfit', system-ui, sans-serif;
+  cursor: pointer;
+  transition: opacity .18s, transform .18s;
+  box-shadow: 0 3px 12px rgba(5,150,105,.28);
+  margin: 0; width: auto;
+}
+.um-ack-btn:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 5px 18px rgba(5,150,105,.35); }
+.um-ack-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* ── Bell button badge pulse ──────────────────────────────────── */
+@keyframes badge-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,.5); }
+  50%      { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+}
+#updates-badge { animation: badge-pulse 2s ease infinite; }
+
+  `;
+  document.head.appendChild(style);
+})();
 
 
-async function checkForUpdates(){
-  // --- ADD THIS SAFETY GUARD ---
-  if (!currentUser || !schoolId) {
-      console.warn("Waiting for user auth to check updates...");
-      return; 
+// ═══════════════════════════════════════════════════════════════════
+//  UPDATE CATEGORIES CONFIG
+// ═══════════════════════════════════════════════════════════════════
+const UPDATE_TYPES = {
+  students:   { icon: '👨‍🎓', label: 'Students',    chipCls: 'chip-student', rowCls: 'type-students'   },
+  attendance: { icon: '📅',   label: 'Attendance',  chipCls: 'chip-att',     rowCls: 'type-attendance' },
+  fees:       { icon: '💰',   label: 'Fees',        chipCls: 'chip-fees',    rowCls: 'type-fees'       },
+  results:    { icon: '📊',   label: 'Results',     chipCls: 'chip-results', rowCls: 'type-results'    },
+};
+
+// Active filter state
+let _umActiveFilter = 'all';
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  checkForUpdates  — accurate Firestore paths, detailed deltas
+// ═══════════════════════════════════════════════════════════════════
+async function checkForUpdates() {
+  if (!currentUser?.uid || !schoolId) {
+    console.warn('[Updates] Auth not ready — skipping.');
+    return;
   }
-  // -----------------------------
-  
-  recentUpdates=[];
+
+  recentUpdates = [];
+
   try {
-    const headRef=doc(db,'schools',schoolId,'headteachers',currentUser.uid);
-  // ... rest of your existing code ...
+    // ── Load headteacher meta (last viewed + known counts) ──────
+    const headRef  = doc(db, 'schools', schoolId, 'headteachers', currentUser.uid);
+    const headSnap = await getDoc(headRef);
+    const headData = headSnap.exists() ? headSnap.data() : {};
 
+    const lastViewed   = headData.lastViewedUpdates
+      ? new Date(headData.lastViewedUpdates)
+      : new Date(0);
 
-    const headSnap=await getDoc(headRef);
-    const headData=headSnap.exists()?headSnap.data():{};
-    const lastViewed=headData.lastViewedUpdates?new Date(headData.lastViewedUpdates):new Date(0);
-    let lkc=headData.lastKnownStudentCounts||{};
-    const teachersSnap=await getDocs(collection(db,'schools',schoolId,'teachers'));
-    for(const teacherDoc of teachersSnap.docs){
-      const tid=teacherDoc.id; const td=teacherDoc.data();
-      const teacherName=td.name||'Unknown Teacher';
-      // KEY FIX: Use array field for class IDs
-      const classIds=[...new Set([...(td.assignedClasses||[]),...(td.classes||[])].map(c=>String(c).trim()).filter(Boolean))];
-      for(const classId of classIds){
-        const v=classIdVariants(classId);
-        const className=classId.replace(/_/g,' ');
-        const q=query(collection(db,'schools',schoolId,'teachers',tid,'students'),where('classId','in',v));
-        const ss=await getDocs(q);
-        const current=ss.size; const key=`${tid}_${classId}`; const previous=lkc[key]||0;
-        if(current>previous){ recentUpdates.push({type:'students',icon:'👨‍🎓',teacher:teacherName,message:`Added ${current-previous} new student(s) in <strong>${className}</strong>. Total: <strong>${current}</strong>`,timestamp:Date.now(),time:new Date().toLocaleString()}); lkc[key]=current; }
+    let lkc = headData.lastKnownStudentCounts || {}; // { "tid_classId": number }
+
+    // ── Iterate over all teachers ────────────────────────────────
+    const teachersSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers'));
+
+    for (const teacherDoc of teachersSnap.docs) {
+      const tid  = teacherDoc.id;
+      const td   = teacherDoc.data();
+      const name = td.name || 'Unknown Teacher';
+
+      // Merge both array fields (assignedClasses + classes) → unique IDs
+      const classIds = [
+        ...new Set(
+          [...(td.assignedClasses || []), ...(td.classes || [])]
+            .map(c => String(c).trim())
+            .filter(Boolean)
+        )
+      ];
+
+      // ── Per-class: student count changes ──────────────────────
+      for (const classId of classIds) {
+        const v = classIdVariants(classId);
+        if (!v.length) continue;
+
+        const className = classId.replace(/_/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase());
+
+        // Students live at school level, filtered by classId
+        const studQ = query(
+          collection(db, 'schools', schoolId, 'students'),
+          where('classId', 'in', v)
+        );
+        const studSnap = await getDocs(studQ);
+        const current  = studSnap.size;
+        const key      = `${tid}_${classId}`;
+        const previous = lkc[key] ?? null;
+
+        if (previous === null) {
+          // First time we've seen this class — record baseline, no alert
+          lkc[key] = current;
+        } else if (current !== previous) {
+          const delta = current - previous;
+          recentUpdates.push({
+            type:      'students',
+            teacher:   name,
+            className,
+            message:   delta > 0
+              ? `<strong>${delta}</strong> new student${delta !== 1 ? 's' : ''} enrolled in <strong>${className}</strong>. Roster now at <strong>${current}</strong>.`
+              : `<strong>${Math.abs(delta)}</strong> student${Math.abs(delta) !== 1 ? 's' : ''} removed from <strong>${className}</strong>. Roster: <strong>${current}</strong>.`,
+            delta,
+            timestamp: Date.now(),
+            time:      new Date().toLocaleString('en-ZM'),
+          });
+          lkc[key] = current;
+        }
       }
-      for(const ht of [{coll:'attendanceHistory',name:'attendance records',icon:'📅'},{coll:'fees',name:'fee payments',icon:'💰'},{coll:'results',name:'test results',icon:'📊'}]){
-        const hs=await getDocs(collection(db,'schools',schoolId,'teachers',tid,ht.coll));
-        let nc=0,lt=null;
-        hs.forEach(d=>{const data=d.data();if(data.syncedAt){const t=parseFirestoreDate(data.syncedAt);if(t>lastViewed){nc++;if(!lt||t>lt)lt=t;}}});
-        if(nc>0) recentUpdates.push({type:ht.coll,icon:ht.icon,teacher:teacherName,message:`Synced ${nc} new ${ht.name}.`,timestamp:lt?lt.getTime():Date.now(),time:lt?lt.toLocaleString():new Date().toLocaleString()});
+
+      // ── Per-teacher subcollections: new synced docs ────────────
+      const subcollections = [
+        {
+          coll:    'attendanceHistory',
+          type:    'attendance',
+          label:   'attendance record',
+          // Attendance docs may not have syncedAt — fall back to date field
+          getTime: d => d.syncedAt
+            ? parseFirestoreDate(d.syncedAt)
+            : (d.date ? new Date(d.date) : null),
+          // Build a meaningful message from the doc
+          summary: (docs) => {
+            const present = docs.filter(d => d.present).length;
+            const pct     = docs.length ? Math.round(present / docs.length * 100) : 0;
+            const classes  = [...new Set(docs.map(d => d.classId).filter(Boolean))];
+            return `<strong>${docs.length}</strong> attendance record${docs.length !== 1 ? 's' : ''} synced`
+              + (classes.length ? ` across <strong>${classes.length}</strong> class${classes.length !== 1 ? 'es' : ''}` : '')
+              + `. Session rate: <strong>${pct}%</strong> present.`;
+          },
+        },
+        {
+          coll:    'results',
+          type:    'results',
+          label:   'test result',
+          getTime: d => d.syncedAt
+            ? parseFirestoreDate(d.syncedAt)
+            : (d.createdAt ? parseFirestoreDate(d.createdAt) : null),
+          summary: (docs) => {
+            const subjects = [...new Set(docs.map(d => d.subject).filter(Boolean))];
+            const tests    = [...new Set(docs.map(d => d.testName).filter(Boolean))];
+            return `<strong>${docs.length}</strong> result set${docs.length !== 1 ? 's' : ''} published`
+              + (subjects.length ? ` for <strong>${subjects.slice(0,3).join(', ')}</strong>` : '')
+              + (tests.length    ? ` (<strong>${tests.slice(0,2).join(', ')}</strong>)` : '') + '.';
+          },
+        },
+        {
+          coll:    'fees',
+          type:    'fees',
+          label:   'fee payment',
+          getTime: d => d.syncedAt
+            ? parseFirestoreDate(d.syncedAt)
+            : (d.date ? new Date(d.date) : null),
+          summary: (docs) => {
+            // Total collected across new fee docs
+            let total = 0;
+            docs.forEach(d => {
+              if (Array.isArray(d.payments)) d.payments.forEach(p => { total += Number(p.amount) || 0; });
+              else if (d.amount) total += Number(d.amount) || 0;
+            });
+            return `<strong>${docs.length}</strong> fee payment record${docs.length !== 1 ? 's' : ''} synced.`
+              + (total > 0 ? ` New revenue: <strong>K${total.toLocaleString()}</strong>.` : '');
+          },
+        },
+      ];
+
+      for (const sc of subcollections) {
+        let allDocs = [];
+        try {
+          const snap = await getDocs(
+            collection(db, 'schools', schoolId, 'teachers', tid, sc.coll)
+          );
+          snap.forEach(d => allDocs.push(d.data()));
+        } catch (_) { continue; }
+
+        const newDocs = allDocs.filter(d => {
+          const t = sc.getTime(d);
+          return t && t > lastViewed;
+        });
+
+        if (!newDocs.length) continue;
+
+        const latestTime = newDocs.reduce((acc, d) => {
+          const t = sc.getTime(d);
+          return t > acc ? t : acc;
+        }, new Date(0));
+
+        // Group by classId for richer context
+        const classMentions = [...new Set(
+          newDocs.map(d => d.classId).filter(Boolean)
+            .map(c => c.replace(/_/g, ' ').replace(/\b\w/g, x => x.toUpperCase()))
+        )];
+
+        recentUpdates.push({
+          type:      sc.type,
+          teacher:   name,
+          className: classMentions.length === 1 ? classMentions[0] : null,
+          classGroup: classMentions.length > 1 ? classMentions : null,
+          message:   sc.summary(newDocs),
+          count:     newDocs.length,
+          timestamp: latestTime.getTime(),
+          time:      latestTime.toLocaleString('en-ZM'),
+        });
       }
     }
-    recentUpdates.sort((a,b)=>b.timestamp-a.timestamp);
-    await updateDoc(headRef,{lastKnownStudentCounts:lkc},{merge:true});
-    const badge=document.getElementById('updates-badge');
-    if(badge){badge.textContent=recentUpdates.length;badge.style.display=recentUpdates.length>0?'inline':'none';}
-    if(recentUpdates.length>0) showUpdatesModal();
-  } catch(e){ console.error('Updates check:',e); }
+
+    // ── Sort newest first ────────────────────────────────────────
+    recentUpdates.sort((a, b) => b.timestamp - a.timestamp);
+
+    // ── Persist updated LKC ─────────────────────────────────────
+    try {
+      await updateDoc(headRef, { lastKnownStudentCounts: lkc }, { merge: true });
+    } catch (_) { /* non-critical */ }
+
+    // ── Update bell badge ────────────────────────────────────────
+    const badge = document.getElementById('updates-badge');
+    if (badge) {
+      badge.textContent = recentUpdates.length;
+      badge.style.display = recentUpdates.length > 0 ? 'inline' : 'none';
+    }
+
+    // ── Auto-open if there are updates ──────────────────────────
+    if (recentUpdates.length > 0) showUpdatesModal();
+
+  } catch (e) {
+    console.error('[Updates] checkForUpdates error:', e);
+  }
 }
-function showUpdatesModal(){
-  const modal=document.getElementById('updates-modal'); const list=document.getElementById('updates-list');
-  if(!modal||!list) return; list.innerHTML='';
-  const ce=document.getElementById('updates-count'); if(ce) ce.textContent=`(${recentUpdates.length})`;
-  recentUpdates.forEach(up=>{
-    const card=document.createElement('div'); card.className='update-card';
-    card.innerHTML=`<div class="update-icon">${up.icon}</div><div style="flex:1;"><span class="update-teacher-badge"><i class="fas fa-chalkboard-teacher"></i> ${up.teacher}</span><p style="font-size:.95rem;color:var(--ink);">${up.message}</p><span class="update-time"><i class="far fa-clock"></i> ${up.time}</span></div>`;
-    list.appendChild(card);
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  showUpdatesModal  — premium UI
+// ═══════════════════════════════════════════════════════════════════
+function showUpdatesModal() {
+  const modal = document.getElementById('updates-modal');
+  if (!modal) return;
+
+  _umActiveFilter = 'all';
+
+  // Replace modal inner HTML with premium shell
+  modal.innerHTML = `
+    <div class="um-shell">
+
+      <!-- Header -->
+      <div class="um-header">
+        <div class="um-header-top">
+          <div class="um-header-icon">🔔</div>
+          <div class="um-header-text">
+            <div class="um-header-title">Activity Feed</div>
+            <div class="um-header-subtitle" id="um-subtitle">Checking latest activity…</div>
+          </div>
+          <button class="um-close-btn" onclick="window.closeUpdatesModal()" title="Close">✕</button>
+        </div>
+        <div class="um-chips" id="um-chips"></div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="um-toolbar">
+        <button class="um-filter-btn active" data-filter="all">All</button>
+        <button class="um-filter-btn" data-filter="students">👨‍🎓 Students</button>
+        <button class="um-filter-btn" data-filter="attendance">📅 Attendance</button>
+        <button class="um-filter-btn" data-filter="fees">💰 Fees</button>
+        <button class="um-filter-btn" data-filter="results">📊 Results</button>
+        <div class="um-toolbar-right">
+          <button class="um-mark-read-btn" onclick="window.markAllRead()">
+            <i class="fas fa-check-double"></i> Mark all read
+          </button>
+        </div>
+      </div>
+
+      <!-- Feed -->
+      <div class="um-feed" id="um-feed"></div>
+
+      <!-- Footer -->
+      <div class="um-footer">
+        <span class="um-footer-info" id="um-footer-info"></span>
+        <button class="um-ack-btn" onclick="window.markAllRead()">
+          <i class="fas fa-check-double"></i> Acknowledge All
+        </button>
+      </div>
+
+    </div>`;
+
+  // Populate chips
+  _renderChips();
+
+  // Populate feed
+  _renderFeed();
+
+  // Wire filter buttons
+  modal.querySelectorAll('.um-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _umActiveFilter = btn.dataset.filter;
+      modal.querySelectorAll('.um-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _renderFeed();
+    });
   });
-  modal.style.display='flex';
+
+  modal.style.display = 'flex';
 }
-window.closeUpdatesModal=function(){ const m=document.getElementById('updates-modal'); if(m) m.style.display='none'; };
-window.markAllRead=async function(){
+
+
+// ─── Render summary chips ─────────────────────────────────────────
+function _renderChips() {
+  const chipsEl  = document.getElementById('um-chips');
+  const subtitle = document.getElementById('um-subtitle');
+  if (!chipsEl) return;
+
+  const total = recentUpdates.length;
+  if (total === 0) {
+    chipsEl.innerHTML = `<span class="um-chip chip-empty">✓ Everything is up to date</span>`;
+    if (subtitle) subtitle.textContent = 'No new activity since your last visit.';
+    return;
+  }
+
+  const counts = {};
+  recentUpdates.forEach(u => { counts[u.type] = (counts[u.type] || 0) + 1; });
+
+  let html = `<span class="um-chip chip-total">🔔 ${total} update${total !== 1 ? 's' : ''}</span>`;
+  Object.entries(UPDATE_TYPES).forEach(([key, cfg]) => {
+    if (counts[key]) {
+      html += `<span class="um-chip ${cfg.chipCls}">${cfg.icon} ${counts[key]} ${cfg.label}</span>`;
+    }
+  });
+  chipsEl.innerHTML = html;
+
+  // Subtitle: teacher names
+  const teachers = [...new Set(recentUpdates.map(u => u.teacher))];
+  if (subtitle) {
+    subtitle.textContent = teachers.length <= 2
+      ? `From: ${teachers.join(' & ')}`
+      : `From ${teachers.length} staff members · latest activity`;
+  }
+}
+
+
+// ─── Render feed rows ─────────────────────────────────────────────
+function _renderFeed() {
+  const feed       = document.getElementById('um-feed');
+  const footerInfo = document.getElementById('um-footer-info');
+  if (!feed) return;
+
+  const filtered = _umActiveFilter === 'all'
+    ? recentUpdates
+    : recentUpdates.filter(u => u.type === _umActiveFilter);
+
+  if (!filtered.length) {
+    feed.innerHTML = `
+      <div class="um-empty">
+        <span class="um-empty-icon">${_umActiveFilter === 'all' ? '✅' : UPDATE_TYPES[_umActiveFilter]?.icon || '📭'}</span>
+        <div class="um-empty-title">${_umActiveFilter === 'all' ? 'All caught up!' : `No ${UPDATE_TYPES[_umActiveFilter]?.label || ''} updates`}</div>
+        <div class="um-empty-sub">${_umActiveFilter === 'all' ? 'There are no pending updates from your teachers.' : 'Nothing new in this category since your last visit.'}</div>
+      </div>`;
+    if (footerInfo) footerInfo.textContent = 'Tip: Click "Acknowledge All" once you\'ve reviewed everything.';
+    return;
+  }
+
+  feed.innerHTML = filtered.map((u, i) => {
+    const cfg      = UPDATE_TYPES[u.type] || { icon: '📌', rowCls: '' };
+    const isNew    = (Date.now() - u.timestamp) < 10 * 60 * 1000; // < 10 min
+    const deltaTag = u.delta !== undefined
+      ? `<span class="um-row-delta ${u.delta >= 0 ? 'delta-up' : 'delta-warn'}">${u.delta >= 0 ? '▲' : '▼'} ${Math.abs(u.delta)}</span>`
+      : u.count
+        ? `<span class="um-row-delta delta-info">+${u.count} new</span>`
+        : '';
+
+    const classBadge = u.className
+      ? `<span class="um-row-class"><i class="fas fa-chalkboard" style="font-size:.65rem;"></i> ${u.className}</span>`
+      : u.classGroup
+        ? `<span class="um-row-class"><i class="fas fa-chalkboard" style="font-size:.65rem;"></i> ${u.classGroup.length} classes</span>`
+        : '';
+
+    return `
+    <div class="um-row ${cfg.rowCls}" style="animation-delay:${i * 40}ms">
+      <div class="um-row-icon">${cfg.icon}</div>
+      <div class="um-row-body">
+        <div>
+          <span class="um-row-teacher"><i class="fas fa-chalkboard-teacher" style="font-size:.65rem;"></i> ${u.teacher}</span>
+          ${classBadge}
+          ${isNew ? '<span style="display:inline-flex;align-items:center;gap:3px;font-size:.7rem;font-weight:700;color:#059669;background:#dcfce7;padding:2px 7px;border-radius:99px;margin-left:5px;">● NEW</span>' : ''}
+        </div>
+        <div class="um-row-message">${u.message}</div>
+        <div class="um-row-meta">
+          <span class="um-row-time"><i class="far fa-clock"></i> ${u.time}</span>
+          ${deltaTag}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (footerInfo) {
+    footerInfo.textContent = `Showing ${filtered.length} of ${recentUpdates.length} update${recentUpdates.length !== 1 ? 's' : ''} · Last checked ${new Date().toLocaleTimeString('en-ZM')}`;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  Public surface
+// ═══════════════════════════════════════════════════════════════════
+window.closeUpdatesModal = function () {
+  const m = document.getElementById('updates-modal');
+  if (m) m.style.display = 'none';
+};
+
+window.markAllRead = async function () {
+  const btn = document.querySelector('.um-ack-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; }
+
   showLoading();
   try {
-    await updateDoc(doc(db,'schools',schoolId,'headteachers',currentUser.uid),{lastViewedUpdates:new Date().toISOString()},{merge:true});
-    recentUpdates=[]; const badge=document.getElementById('updates-badge'); if(badge) badge.style.display='none';
+    await updateDoc(
+      doc(db, 'schools', schoolId, 'headteachers', currentUser.uid),
+      { lastViewedUpdates: new Date().toISOString() },
+      { merge: true }
+    );
+    recentUpdates = [];
+    const badge = document.getElementById('updates-badge');
+    if (badge) badge.style.display = 'none';
     window.closeUpdatesModal();
-  } catch(e){ alert('Could not mark as read.'); } finally { hideLoading(); }
+  } catch (e) {
+    alert('Could not save acknowledgement. Please try again.');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-double"></i> Acknowledge All'; }
+  } finally {
+    hideLoading();
+  }
 };
-document.getElementById('updates-btn')?.addEventListener('click',()=>{ if(recentUpdates.length>0) showUpdatesModal(); });
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Escape') return;
-  if(document.getElementById('updates-modal')?.style.display==='flex')  window.closeUpdatesModal();
-  if(document.getElementById('analytics-modal')?.style.display==='flex') window.closeAnalyticsModal();
+
+// Bell button click — re-open if there are updates, or show empty state
+document.getElementById('updates-btn')?.addEventListener('click', () => {
+  showUpdatesModal();
 });
+
+// ESC to close
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('updates-modal')?.style.display === 'flex') window.closeUpdatesModal();
+  if (document.getElementById('analytics-modal')?.style.display === 'flex') window.closeAnalyticsModal();
+});
+
 
 
 
