@@ -1927,9 +1927,8 @@ if(section==='students'){
       // KEY FIX: Query without term filter — filter in JS to handle all formats
       
 
-// AFTER (correct):
 const q = query(
-  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'attendanceHistory'),
+  collection(db, 'schools', schoolId, 'attendanceHistory'),
   where('classId', 'in', variants)
 );
       
@@ -1977,9 +1976,8 @@ const q = query(
     
     else if (section === 'results') {
   
-  // AFTER (correct):
 const q = query(
-  collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'results'),
+  collection(db, 'schools', schoolId, 'results'),
   where('classId', 'in', variants)
 );
   
@@ -2026,9 +2024,11 @@ else if (section === 'fees') {
   for (const v of variants) {
     if (totalFee > 0) break;
     try {
+      
       const snap = await getDoc(
-        doc(db, 'schools', schoolId, 'teachers', currentTeacherId, 'feesConfig', v)
-      );
+  doc(db, 'schools', schoolId, 'feesConfig', v)
+);
+      
       if (snap.exists()) {
         const data = snap.data();
         totalFee = Number(data.totalAmount || data.totalFee || data.amount || 0);
@@ -2040,21 +2040,26 @@ else if (section === 'fees') {
   console.log(`[Fees] Final totalFee for "${selectedClassId}": K${totalFee}`);
   
   // ── Students at school level ──────────────────────────────────
+  
   const studQ = query(
-    collection(db, 'schools', schoolId, 'students'),
-    where('classId', 'in', variants)
-  );
-  const studSnap = await getDocs(studQ);
+  collection(db, 'schools', schoolId, 'students'),
+  where('classId', 'in', variants)
+);
+const studSnap = await getDocs(studQ);
+  
+  const feesQ = query(
+  collection(db, 'schools', schoolId, 'fees'),
+  where('classId', 'in', variants)
+);
+  
+  
   const studMap = new Map();
   studSnap.forEach(ds => studMap.set(ds.id, ds.data()));
   
   const expectedTotal = totalFee * studMap.size;
   
   // ── Fee payments at teacher subcollection level ───────────────
-  const feesQ = query(
-    collection(db, 'schools', schoolId, 'teachers', currentTeacherId, 'fees'),
-    where('classId', 'in', variants)
-  );
+  
   const feesData = await getDocs(feesQ);
   
   // ── Render header ─────────────────────────────────────────────
